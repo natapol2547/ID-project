@@ -114,18 +114,36 @@ def calibrate_camera():
 
     print("\nCalibration successful!")
 
+    # Convert numpy arrays to lists for JSON serialization
+    mtx_list = mtx.tolist() if mtx is not None else None
+    dist_list = dist.tolist() if dist is not None else None
+
     # Save the camera calibration results
     calibration_data = {
-        'camera_matrix': mtx,
-        'dist_coeffs': dist,
-        'image_size': image_size,
-        'reprojection_error': ret
+        'camera_matrix': mtx_list,
+        'dist_coeffs': dist_list,
+        'image_size': image_size, # tuple is fine for JSON
+        'reprojection_error': ret # float is fine for JSON
     }
 
-    # Using pickle to save (can save NumPy arrays directly)
-    with open(CALIBRATION_FILE, 'wb') as f:
-        pickle.dump(calibration_data, f)
-    print(f"\nCalibration data saved to: {CALIBRATION_FILE}")
+    # Update file extension for JSON
+    json_calibration_file = os.path.splitext(CALIBRATION_FILE)[0] + ".json"
+
+    import json # Make sure to import json
+
+    # Using json to save
+    try:
+        with open(json_calibration_file, 'w') as f:
+            json.dump(calibration_data, f, indent=4) # indent for readability
+        print(f"\nCalibration data saved to: {json_calibration_file}")
+    except TypeError as e:
+        print(f"Error saving to JSON: {e}")
+        print("Make sure all data types are JSON serializable (e.g., lists instead of numpy arrays).")
+    except Exception as e:
+        print(f"An unexpected error occurred while saving to JSON: {e}")
+
 
 if __name__ == '__main__':
     calibrate_camera()
+
+

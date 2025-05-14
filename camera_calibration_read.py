@@ -1,22 +1,18 @@
 import cv2
 import json
-import numpy as np # if using .npz
+import numpy as np
 
-CALIBRATION_FILE = "camera_calibration.json"
+CALIBRATION_FILE = "camera_calibration_data.json" # Updated to .json
 
 def load_calibration_data(filepath=CALIBRATION_FILE):
-    try:
-        with open(filepath, 'rb') as f:
-            data = json.load(f)
-        camera_matrix = data['camera_matrix']
-        dist_coeffs = data['dist_coeffs']
-        # image_size = data['image_size'] # if needed
-        print("Calibration data loaded successfully.")
-        return camera_matrix, dist_coeffs
-    except FileNotFoundError:
-        print(f"Error: Calibration file '{filepath}' not found.")
-        return None, None
-
+    with open(filepath, 'r') as f: # Open in text mode for json
+        data = json.load(f)
+    # Convert lists back to numpy arrays
+    camera_matrix = np.array(data['camera_matrix'])
+    dist_coeffs = np.array(data['dist_coeffs'])
+    # image_size = data['image_size'] # This line can be uncommented if image_size is needed
+    print("Calibration data loaded successfully.")
+    return camera_matrix, dist_coeffs
 
 # Example usage:
 mtx, dist = load_calibration_data()
