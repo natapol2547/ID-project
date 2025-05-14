@@ -15,7 +15,7 @@ def gstreamer_pipeline(
     capture_height=2464,
     display_width=1920,  # 102
     display_height=1080,  # 77
-    framerate=20,           # You can try higher FPS if needed
+    framerate=10,           # You can try higher FPS if needed
     flip_method=0,
 ):
     return (
@@ -41,6 +41,11 @@ def show_camera():
     window_title = "Wide FOV CSI Camera"
 
     mtx, dist = load_calibration_data()
+    h = 1080
+    w = 1920
+    newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
+    mapx, mapy = cv2.initUndistortRectifyMap(mtx, dist, None, newcameramtx, (w,h), cv2.CV_32FC1)
+    
     print("Using GStreamer pipeline:")
 
     video_capture = cv2.VideoCapture(gstreamer_pipeline(), cv2.CAP_GSTREAMER)
@@ -54,11 +59,11 @@ def show_camera():
                     break
 
                 h,  w = frame.shape[:2]
-                print(mtx,dist,(w,h))
-                newcameramtx, roi = cv2.getOptimalNewCameraMatrix(
-                    mtx, dist, (w, h), 1, (w, h))
+                # print(mtx,dist,(w,h))
+                # newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
                 # undistort
-                dst = cv2.undistort(frame, mtx, dist, None, newcameramtx)
+                # dst = cv2.undistort(frame, mtx, dist, None, newcameramtx)
+                dst = cv2.remap(frame, mapx, mapy, cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
 
                 # crop the image
                 x, y, w, h = roi
