@@ -1,0 +1,25 @@
+{
+    "camera_matrix": [
+        null,
+        [
+            0
+        ],
+        {
+            "0": 98
+        }
+    ],
+    "dist_coeffs": [
+        null,
+        [
+            0
+        ],
+        {
+            "0": 98
+        }
+    ],
+    "image_size": [
+        1920,
+        1080
+    ],
+    "reprojection_error": 0.7414102360207308
+}
