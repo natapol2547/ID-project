@@ -56,8 +56,8 @@ def show_camera():
                 keyCode = cv2.waitKey(10) & 0xFF
                 if keyCode == 27 or keyCode == ord('q'):
                     cv2.imwrite("image1.jpg", frame)
-                    time.sleep(2)
-                    cv2.imwrite("image2.jpg", frame)
+                    # time.sleep(2)
+                    # cv2.imwrite("image2.jpg", frame)
                     break
         finally:
             video_capture.release()
