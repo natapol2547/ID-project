@@ -36,57 +36,54 @@ def gstreamer_pipeline(
         )
     )
 
+class Camera():
+    def __init__(self,width=1920, height=1080):
+        self.window_title = "Wide FOV CSI Camera"
+        mtx, dist = load_calibration_data()
+        
+        if mtx is None or dist is None:
+            assert ValueError("Invalid calibration data")
+        
+        newcameramtx, self.roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (width, height), 1, (width, height))
+        self._mapx, self._mapy = cv2.initUndistortRectifyMap(mtx, dist, None, newcameramtx, (width,height), cv2.CV_32FC1)
+        self.video_capture = cv2.VideoCapture(gstreamer_pipeline(), cv2.CAP_GSTREAMER)
 
-def show_camera():
-    window_title = "Wide FOV CSI Camera"
+    def __del__(self):
+        if self.video_capture.isOpened():
+            self.video_capture.release()
+        cv2.destroyAllWindows()
 
-    mtx, dist = load_calibration_data()
-    h = 1080
-    w = 1920
-    newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
-    mapx, mapy = cv2.initUndistortRectifyMap(mtx, dist, None, newcameramtx, (w,h), cv2.CV_32FC1)
-    
-    print("Using GStreamer pipeline:")
+    def capture(self):
+        if not self.video_capture.isOpened():
+            return "Error: Unable to open camera"
 
-    video_capture = cv2.VideoCapture(gstreamer_pipeline(), cv2.CAP_GSTREAMER)
-    if video_capture.isOpened():
-        try:
-            cv2.namedWindow(window_title, cv2.WINDOW_AUTOSIZE)
-            while True:
-                ret_val, frame = video_capture.read()
-                if not ret_val:
-                    print("Error: Could not read frame.")
-                    break
+        while True:
+            ret_val, frame = self.video_capture.read()
+            if not ret_val:
+                print("Error: Could not read frame.")
+                break
 
-                h,  w = frame.shape[:2]
-                # print(mtx,dist,(w,h))
-                # newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
-                # undistort
-                # dst = cv2.undistort(frame, mtx, dist, None, newcameramtx)
-                dst = cv2.remap(frame, mapx, mapy, cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
+            h,  w = frame.shape[:2]
+            # print(mtx,dist,(w,h))
+            # newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
+            # undistort
+            # dst = cv2.undistort(frame, mtx, dist, None, newcameramtx)
+            dst = cv2.remap(frame, self._mapx, self._mapy, cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
 
-                # crop the image
-                x, y, w, h = roi
-                dst = dst[y:y+h, x:x+w]
-
-                if cv2.getWindowProperty(window_title, cv2.WND_PROP_AUTOSIZE) >= 0:
-                    cv2.imshow(window_title, dst)
-                else:
-                    break
-
-                keyCode = cv2.waitKey(10) & 0xFF
-                if keyCode == 27 or keyCode == ord('q'):
-                    cv2.imwrite("image1.jpg", frame)
-                    # time.sleep(2)
-                    # cv2.imwrite("image2.jpg", frame)
-                    break
-        finally:
-            video_capture.release()
-            cv2.destroyAllWindows()
-    else:
-        print("Error: Unable to open camera")
+            # crop the image
+            x, y, w, h = self.roi
+            dst = dst[y:y+h, x:x+w]
+            return dst
 
 
 if __name__ == "__main__":
-        print(gstreamer_pipeline())
-        show_camera()
+    print(gstreamer_pipeline())
+    cam = Camera()
+    # Capture an image
+    image = cam.capture()
+    # Save the image to a file
+    timestamp = time.strftime("%Y%m%d-%H%M%S")
+    filename = f"capture_{timestamp}.jpg"
+    cv2.imwrite(filename, image)
+    print(f"Image saved as {filename}")
+    cv2.imshow(cam.window_title, image)
