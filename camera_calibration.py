@@ -1,40 +1,131 @@
 import numpy as np
-import cv2 as cv
+import cv2
 import glob
+import os
+import pickle # Alternative: np.savez for numpy arrays
 
-# termination criteria
-criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+# -----------------------------
+# Configuration
+# -----------------------------
+# Number of internal corners of the checkerboard
+# If your checkerboard is 7x5 SQUARES, then it's (7-1)x(5-1) = 6x4 internal corners.
+# Adjust if your definition of "7x5" is different (e.g., 7x5 internal corners directly).
+CHECKERBOARD_ROWS = 10  # Number of squares along the height - 1
+CHECKERBOARD_COLS = 7  # Number of squares along the width - 1
+INTERNAL_CORNERS_SHAPE = (CHECKERBOARD_COLS - 1, CHECKERBOARD_ROWS - 1) # (cols-1, rows-1) -> (6,4)
 
-# prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
-objp = np.zeros((6*7,3), np.float32)
-objp[:,:2] = np.mgrid[0:7,0:6].T.reshape(-1,2)
+# Square size (in any consistent unit, e.g., mm, cm, m).
+# This is only important if you want to measure real-world distances later.
+# For distortion correction alone, it can be set to 1.
+SQUARE_SIZE = 1.0  # e.g., 2.5 for 2.5 cm squares
 
-# Arrays to store object points and image points from all the images.
-objpoints = [] # 3d point in real world space
-imgpoints = [] # 2d points in image plane.
+IMAGE_DIR = "calibration_images"
+SUPPORTED_FORMATS = ('*.jpg', '*.jpeg', '*.png', '*.bmp', '*.tif', '*.tiff')
+CALIBRATION_FILE = "camera_calibration_data.pkl" # Or .npz if using np.savez
 
-images = glob.glob('./calibration_images/*.jpg')
+# Display options
+SHOW_DETECTED_CORNERS = True # Set to False to speed up if you have many images
+# -----------------------------
 
-for fname in images:
-    img = cv.imread(fname)
-    gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    cv.imshow('img', gray)
+def calibrate_camera():
+    """
+    Performs camera calibration using checkerboard images.
+    Saves calibration data (camera matrix, distortion coefficients).
+    """
+    print(f"Looking for images in: {IMAGE_DIR}")
+    if not os.path.isdir(IMAGE_DIR):
+        print(f"Error: Directory '{IMAGE_DIR}' not found. Please create it and add calibration images.")
+        return
 
-    # Find the chess board corners
-    ret, corners = cv.findChessboardCorners(gray, (7,6), None)
+    # Termination criteria for cornerSubPix
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
-    # If found, add object points, image points (after refining them)
-    if ret == True:
-        objpoints.append(objp)
+    # Prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
+    # These are the 3D coordinates of the checkerboard corners in an idealized world.
+    objp = np.zeros((INTERNAL_CORNERS_SHAPE[0] * INTERNAL_CORNERS_SHAPE[1], 3), np.float32)
+    objp[:, :2] = np.mgrid[0:INTERNAL_CORNERS_SHAPE[0], 0:INTERNAL_CORNERS_SHAPE[1]].T.reshape(-1, 2)
+    objp = objp * SQUARE_SIZE # Scale by square size
 
-        corners2 = cv.cornerSubPix(gray,corners, (11,11), (-1,-1), criteria)
-        imgpoints.append(corners2)
+    # Arrays to store object points and image points from all the images.
+    objpoints = []  # 3D points in real world space
+    imgpoints = []  # 2D points in image plane.
+    image_files = []
 
-        # Draw and display the corners
-        cv.drawChessboardCorners(img, (7,6), corners2, ret)
-        cv.imshow('img', img)
-        # cv.waitKey(500)
-    while(True):
-        pass
+    for fmt in SUPPORTED_FORMATS:
+        image_files.extend(glob.glob(os.path.join(IMAGE_DIR, fmt)))
 
-cv.destroyAllWindows()
+    if not image_files:
+        print(f"No images found in '{IMAGE_DIR}'. Make sure images are present and have supported formats.")
+        return
+
+    print(f"Found {len(image_files)} images. Processing...")
+    image_size = None # To be determined from the first image
+
+    for i, fname in enumerate(image_files):
+        print(f"Processing image {i+1}/{len(image_files)}: {fname}")
+        img = cv2.imread(fname)
+        if img is None:
+            print(f"Warning: Could not read image {fname}. Skipping.")
+            continue
+
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        if image_size is None:
+            image_size = gray.shape[::-1] # (width, height)
+
+        # Find the chess board corners
+        ret, corners = cv2.findChessboardCorners(gray, INTERNAL_CORNERS_SHAPE, None)
+
+        # If found, add object points, image points (after refining them)
+        if ret:
+            objpoints.append(objp)
+            corners2 = cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
+            imgpoints.append(corners2)
+
+            if SHOW_DETECTED_CORNERS:
+                # Draw and display the corners
+                cv2.drawChessboardCorners(img, INTERNAL_CORNERS_SHAPE, corners2, ret)
+                # Scale image for display if too large
+                display_img = img.copy()
+                h, w = display_img.shape[:2]
+                max_disp_h = 720
+                if h > max_disp_h:
+                    scale_factor = max_disp_h / h
+                    display_img = cv2.resize(display_img, (int(w * scale_factor), int(h * scale_factor)))
+
+                cv2.imshow('Detected Corners', display_img)
+                cv2.waitKey(0) # Wait indefinitely for a key press
+        else:
+            print(f"  Checkerboard corners not found in {fname}. Skipping.")
+
+    if SHOW_DETECTED_CORNERS:
+        cv2.destroyAllWindows()
+
+    if not objpoints or not imgpoints:
+        print("Error: No usable checkerboard patterns found in any images. Calibration failed.")
+        print("Tips: Ensure good lighting, full checkerboard visibility, varied angles, and correct CHECKERBOARD_ROWS/COLS.")
+        return
+
+    print(f"\nCalibrating camera using {len(objpoints)} valid images...")
+    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, image_size, None, None)
+
+    if not ret:
+        print("Camera calibration failed. Could not compute parameters.")
+        return
+
+    print("\nCalibration successful!")
+
+    # Save the camera calibration results
+    calibration_data = {
+        'camera_matrix': mtx,
+        'dist_coeffs': dist,
+        'image_size': image_size,
+        'reprojection_error': ret
+    }
+
+    # Using pickle to save (can save NumPy arrays directly)
+    with open(CALIBRATION_FILE, 'wb') as f:
+        pickle.dump(calibration_data, f)
+    print(f"\nCalibration data saved to: {CALIBRATION_FILE}")
+
+if __name__ == '__main__':
+    calibrate_camera()
