@@ -6,7 +6,7 @@
 import time
 import cv2
 import traceback
-from camera_calibration_read import load_calibration_data
+from calibration.camera_calibration_read import load_calibration_data
 
 
 def gstreamer_pipeline(
