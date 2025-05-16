@@ -8,17 +8,6 @@ import time
 from gameWindow import GameWindow
 from camCalibrate import Camera
 
-#########area for QR code cropping def###########
-
-
-
-gameWindow = GameWindow("GameWIndow")
-
-
-
-
-###############################################
-
 def fixMatrixOrientation(data,direction):
     if direction == 'LEFT':
         data = np.rot90(data, k=3)
@@ -379,59 +368,18 @@ def gstreamer_pipeline(
         )
     )
 
-# def take_images():
+def take_images(camera:Camera):
+    for i in range(5):
+            while True:
+                elapsed = time.time() - start_time
+                if elapsed > 1:
+                    GPIO.output(SERVO_PIN, GPIO.HIGH)
+                    cv2.imwrite(f"image_{i}.png", camera.capture())
+                    print(f"Saved image_{i}.png")
+                    GPIO.output(SERVO_PIN, GPIO.LOW)
+                    start_time = time.time()
+                    break
 
-#     start_time = time.time()
-#     image_1_saved = False
-#     image_2_saved = False
-#     image_3_saved = False
-#     image_4_saved = False
-#     image_5_saved = False
-
-#     GPIO.output(SERVO_PIN, GPIO.HIGH)
-#     while True:
-#         ret, frame = cap.read()
-#         if not ret:
-#             print("Failed to read frame")
-#             break
-
-#         current_time = time.time()
-#         elapsed = current_time - start_time
-
-#         if not image_1_saved and elapsed >= 0.4:
-#             cv2.imwrite("image_1.png", frame)
-#             print("Saved image_1.png at", elapsed, "seconds")
-#             image_1_saved = True
-#             GPIO.output(SERVO_PIN, GPIO.LOW)
-
-   
-#         if not image_2_saved and elapsed >= 0.8:
-#             cv2.imwrite("image_2.png", frame)
-#             print("Saved image_2.png at", elapsed, "seconds")
-#             image_2_saved = True
-#             GPIO.output(SERVO_PIN, GPIO.HIGH)
-        
-#         if not image_3_saved and elapsed >= 1.4:
-#             cv2.imwrite("image_3.png", frame)
-#             print("Saved image_3.png at", elapsed, "seconds")
-#             image_3_saved = True
-#             GPIO.output(SERVO_PIN, GPIO.LOW)
-        
-#         if not image_4_saved and elapsed >= 1.9:
-#             cv2.imwrite("image_4.png", frame)
-#             print("Saved image_4.png at", elapsed, "seconds")
-#             image_4_saved = True
-#             GPIO.output(SERVO_PIN, GPIO.HIGH)
-            
-#         if not image_5_saved and elapsed >= 2.5:
-#             cv2.imwrite("image_5.png", frame)
-#             print("Saved image_5.png at", elapsed, "seconds")
-#             image_5_saved = True
-#             GPIO.output(SERVO_PIN, GPIO.LOW)
-#             break
-
-
-            
 ############################################################################
 def main():
     #At start: 
@@ -448,24 +396,14 @@ def main():
     GPIO.add_event_detect(QUESTION_BUT_PIN, GPIO.RISING, bouncetime=200)
     GPIO.add_event_detect(ANSWER_BUT_PIN, GPIO.RISING, bouncetime=200)
 
-
     GPIO.output(LED_PIN, GPIO.HIGH)
     GPIO.output(SERVO_PIN,GPIO.LOW)
     #Display main start screen code here (Artboard 1)
-
-    #start cam
-    # global cap
-    # cap = cv2.VideoCapture(gstreamer_pipeline(), cv2.CAP_GSTREAMER)
-
-    camera = Camera()
-    window_title = "CSI Camera"
     
-    capturing_images = False
-    capturing_stage = 0
+    camera = Camera()
+    gameWindow = GameWindow("GameWIndow")
   
     while True:
-        image = camera.capture()
-        
         # question button pressed, randomize question from question dict
         if GPIO.event_detected(QUESTION_BUT_PIN):
             print('change question')
@@ -478,98 +416,9 @@ def main():
             start_time = time.time()
             print('check answer')
             GPIO.output(LED_PIN, GPIO.LOW) #turn on light
-            GPIO.output(SERVO_PIN, GPIO.HIGH)
-        
-        if capturing_images:
-            current_time = time.time()
-            elapsed = current_time - start_time
-
-            if capturing_stage == 0:
-                if elapsed > 1:
-                    cv2.imwrite("image_1.png", image)
-                    print("Saved image_1.png")
-                    start_time = time.time()
-                    GPIO.output(SERVO_PIN, GPIO.LOW)
-                    capturing_stage = 1
-            
-            elif capturing_stage == 1:
-                if elapsed > 1:
-                    cv2.imwrite("image_2.png", image)
-                    print("Saved image_2.png")
-                    start_time = time.time()
-                    GPIO.output(SERVO_PIN, GPIO.HIGH)
-                    capturing_stage = 2
-
-            elif capturing_stage == 2:
-                if elapsed > 1:
-                    cv2.imwrite("image_3.png", image)
-                    print("Saved image_3.png")
-                    start_time = time.time()
-                    GPIO.output(SERVO_PIN, GPIO.LOW)
-                    capturing_stage = 3
-
-            elif capturing_stage == 3:
-                if elapsed > 1:
-                    cv2.imwrite("image_4.png", image)
-                    print("Saved image_4.png")
-                    start_time = time.time()
-                    GPIO.output(SERVO_PIN, GPIO.HIGH)
-                    capturing_stage = 4
-
-            elif capturing_stage == 4:
-                if elapsed > 1:
-                    cv2.imwrite("image_5.png", image)
-                    print("Saved image_5.png")
-                    start_time = time.time()
-                    GPIO.output(SERVO_PIN, GPIO.LOW)
-                    GPIO.output(LED_PIN, GPIO.HIGH) #turn off light
-                    capturing_stage = 0
-                    capturing_images = False
-                
-
-
-
-            
-
-            # take_images() #take images while rotating the servo
-            # GPIO.output(SERVO_PIN, GPIO.HIGH)
-            # time.sleep(0.6)
-            # image = camera.capture()
-            # cv2.imwrite("image_1.png", image)
-            # print("Saved image_1.png")
-            # time.sleep(1)
-
-            # GPIO.output(SERVO_PIN, GPIO.LOW)
-            # time.sleep(0.6)
-            # image = camera.capture()
-            # cv2.imwrite("image_2.png", image)
-            # print("Saved image_2.png")
-            # time.sleep(1)
-
-            # GPIO.output(SERVO_PIN, GPIO.HIGH)
-            # time.sleep(0.6)
-            # image = camera.capture()
-            # cv2.imwrite("image_3.png", image)
-            # print("Saved image_3.png")
-            # time.sleep(1)
-
-            # GPIO.output(SERVO_PIN, GPIO.LOW)
-            # time.sleep(0.6)
-            # image = camera.capture()
-            # cv2.imwrite("image_4.png", image)
-            # print("Saved image_4.png")
-            # time.sleep(1)
-
-            # GPIO.output(SERVO_PIN, GPIO.HIGH)
-            # time.sleep(0.6)
-            # image = camera.capture()
-            # cv2.imwrite("image_5.png", image)
-            # print("Saved image_5.png")
-            # time.sleep(0.3)
-
-            # GPIO.output(SERVO_PIN, GPIO.LOW)
-            # GPIO.output(LED_PIN, GPIO.HIGH) #turn off light
-
+            take_images(camera) #take images while rotating the servo
+            GPIO.output(LED_PIN, GPIO.HIGH) #turn off light
+            capturing_images = False
             ####insert cropping code here####
 
 
