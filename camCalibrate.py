@@ -65,10 +65,6 @@ class Camera():
         if cv2.getWindowProperty(self.window_title, cv2.WND_PROP_AUTOSIZE) >= 0:
             cv2.imshow(self.window_title, frame)
         h,  w = frame.shape[:2]
-        # print(mtx,dist,(w,h))
-        # newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
-        # undistort
-        # dst = cv2.undistort(frame, mtx, dist, None, newcameramtx)
         frame = cv2.remap(frame, self._mapx, self._mapy, cv2.INTER_LINEAR)
 
         # crop the image
