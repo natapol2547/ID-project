@@ -7,6 +7,7 @@ import Jetson.GPIO as GPIO
 import time
 from gameWindow import GameWindow
 from camCalibrate import Camera
+from imageProcess import cropSlice, perspTransform
 
 def fixMatrixOrientation(data,direction):
     if direction == 'LEFT':
@@ -212,32 +213,6 @@ questionDict = {
     29: create_question('monkeyStartPoint', 22, [8, 10, 17], 'bananaEndPoint', 3)
 }
 ############################################################################
-def gstreamer_pipeline(
-    sensor_id=0,
-    capture_width=3280,     
-    capture_height=2464,
-    display_width=1920, #102
-    display_height=1080,#77
-    framerate=21,           # You can try higher FPS if needed
-    flip_method=0,
-):
-    return (
-        "nvarguscamerasrc sensor-id=%d ! "
-        "video/x-raw(memory:NVMM), width=(int)%d, height=(int)%d, framerate=(fraction)%d/1 ! "
-        "nvvidconv flip-method=%d ! "
-        "video/x-raw, width=(int)%d, height=(int)%d, format=(string)BGRx ! "
-        "videoconvert ! "
-        "video/x-raw, format=(string)BGR ! appsink"
-        % (
-            sensor_id,
-            capture_width,
-            capture_height,
-            framerate,
-            flip_method,
-            display_width,
-            display_height,
-        )
-    )
 
 def imageToMatrix(imagePaths:dict):
     assert len(imagePaths) == 25, "Image paths must be a list of 25 images"
@@ -291,16 +266,36 @@ def checkAnswerCorrectBool(questionData, QR_matrix)->bool:
       
 def take_images(camera:Camera):
     start_time = time.time()
+    imagePaths = []
     for i in range(5):
         while True:
             elapsed = time.time() - start_time
             if elapsed > 1:
                 cv2.imwrite(f"image_{i}.png", camera.capture())
+                imagePaths.append(f"image_{i}.png")
                 print(f"Saved image_{i}.png")
                 GPIO.output(SERVO_PIN, GPIO.HIGH)
                 GPIO.output(SERVO_PIN, GPIO.LOW)
                 start_time = time.time()
                 break
+    return imagePaths
+
+    
+
+def crop25Images(imagePaths:list):
+    offset = 0
+    croppedImagePaths = []
+    edgeImages = [] #* put in index of edge images that need to be transformed
+    for i in range(5):
+        img = cv2.imread(imagePaths[i])
+        cropped = img[int(img.shape[0]/5)-offset:int(img.shape[0]*4/5)-offset] 
+        if i in edgeImages: 
+            cropped = perspTransform(cropped,offA=100,offB=300,shift=350)
+        cropped = cv2.resize(cropped, (504,711), fx=0.5, fy=0.5)
+        _,paths = cropSlice(cropped,sliceNum=5,write=True,imageIndexOffset=i*5)
+        [croppedImagePaths.append(path) for path in paths]
+    return croppedImagePaths
+
 ############################################################################
 def main():
     #At start: 
@@ -341,8 +336,7 @@ def main():
             GPIO.output(LED_PIN, GPIO.HIGH) #turn off light
             capturing_images = False
 
-            raise NotImplementedError("Insert cropping code here")
-            croppedImagePaths = "lmao" ####insert cropping code here####
+            croppedImagePaths = crop25Images(imagePaths) #crop images into 5x5 matrix
             stageMatrix = imageToMatrix(croppedImagePaths)
             answerIsCorrect = checkAnswerCorrectBool(randomQuestion, stageMatrix)
             
