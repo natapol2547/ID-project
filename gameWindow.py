@@ -1,5 +1,4 @@
 import cv2 as cv
-from cv2.typing import MatLike
 import re
 import os
 
@@ -7,7 +6,7 @@ class Window:
     def __init__(self, winname: str):
         self.winname = winname
 
-    def show(self, img: MatLike, fullscreen: bool = True, delay: int = 0):
+    def show(self, img, fullscreen: bool = True, delay: int = 0):
         cv.namedWindow(self.winname, cv.WINDOW_NORMAL)
         if fullscreen:
             cv.setWindowProperty(self.winname, cv.WND_PROP_FULLSCREEN, cv.WINDOW_FULLSCREEN)
@@ -29,7 +28,7 @@ class GameWindow(Window):
 
     def displayStage(self,stageNum:int = 1):
         assert stageNum <= len(self.images), "Stage number exceeds available images"
-        img = cv.imread(os.path.join(self.path, stageNum))
+        img = cv.imread(os.path.join(self.path, str(stageNum)))
         self.show(img)
 
 if __name__ == "__main__":

@@ -15,7 +15,7 @@ def load_calibration_data(filepath=CALIBRATION_FILE):
     return camera_matrix, dist_coeffs
 
 # Example usage:
-mtx, dist = load_calibration_data()
+# mtx, dist = load_calibration_data()
 # if mtx is not None and dist is not None:
 #     # Load an image
 #     img = cv2.imread("some_image_from_same_camera.jpg")

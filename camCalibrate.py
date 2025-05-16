@@ -13,8 +13,8 @@ def gstreamer_pipeline(
     sensor_id=0,
     capture_width=3280,
     capture_height=2464,
-    display_width=1920,  # 102
-    display_height=1080,  # 77
+    display_width=1640,
+    display_height=1232,
     framerate=10,           # You can try higher FPS if needed
     flip_method=0,
 ):
@@ -37,8 +37,9 @@ def gstreamer_pipeline(
     )
 
 class Camera():
-    def __init__(self,width=1920, height=1080):
+    def __init__(self,width=1640, height=1232):
         self.window_title = "Wide FOV CSI Camera"
+        window_handle = cv2.namedWindow(self.window_title, cv2.WINDOW_AUTOSIZE)
         mtx, dist = load_calibration_data()
         
         if mtx is None or dist is None:
@@ -51,29 +52,29 @@ class Camera():
     def __del__(self):
         if self.video_capture.isOpened():
             self.video_capture.release()
+            print("Released Video")
         cv2.destroyAllWindows()
 
     def capture(self):
         if not self.video_capture.isOpened():
             return "Error: Unable to open camera"
 
-        while True:
-            ret_val, frame = self.video_capture.read()
-            if not ret_val:
-                print("Error: Could not read frame.")
-                break
+        ret_val, frame = self.video_capture.read()
+        if not ret_val:
+            print("Error: Could not read frame.")
+        if cv2.getWindowProperty(self.window_title, cv2.WND_PROP_AUTOSIZE) >= 0:
+            cv2.imshow(self.window_title, frame)
+        h,  w = frame.shape[:2]
+        # print(mtx,dist,(w,h))
+        # newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
+        # undistort
+        # dst = cv2.undistort(frame, mtx, dist, None, newcameramtx)
+        # frame = cv2.remap(frame, self._mapx, self._mapy, cv2.INTER_LINEAR)
 
-            h,  w = frame.shape[:2]
-            # print(mtx,dist,(w,h))
-            # newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
-            # undistort
-            # dst = cv2.undistort(frame, mtx, dist, None, newcameramtx)
-            dst = cv2.remap(frame, self._mapx, self._mapy, cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
-
-            # crop the image
-            x, y, w, h = self.roi
-            dst = dst[y:y+h, x:x+w]
-            return dst
+        # crop the image
+        x, y, w, h = self.roi
+        # frame = frame[y:y+h, x:x+w]
+        return frame
 
 
 if __name__ == "__main__":

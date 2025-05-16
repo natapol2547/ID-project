@@ -1,10 +1,11 @@
-# from pyzbar.pyzbar import decode
+from pyzbar.pyzbar import decode
 import numpy as np
 import math
 import cv2
 import random
 import Jetson.GPIO as GPIO
 import time
+from camCalibrate import Camera
 
 #########area for QR code cropping def###########
 
@@ -244,9 +245,9 @@ question_14 = {
     "end":[['honeyEndPoint',2]]
 }
 question_15 = {
-    "start": [['bearStartPoint',23]],
-    "obstacle" : [4,11,18],
-    "end":[['honeyEndPoint',6]]
+    "start": [['nemoStartPoint',11]],
+    "obstacle" : [6,12,14,19],
+    "end":[['coralEndPoint',13]]
 }
 question_16 = {
     "start": [['nemoStartPoint',15]],
@@ -254,42 +255,100 @@ question_16 = {
     "end":[['coralEndPoint',4]]
 }
 question_17 = {
-    "start": [['nemoStartPoint',11]],
-    "obstacle" : [6,12,1,19],
-    "end":[['coralEndPoint',13]]
-}
-question_18 = {
-    "start": [['nemoStartPoint',2]],
+    "start": [['nemoStartPoint',1]],
     "obstacle" : [7,13,15,20],
     "end":[['coralEndPoint',24]]
 }
-question_19 = {
-    "start": [['nemoStartPoint',15]],
+question_18 = {
+    "start": [['nemoStartPoint',1]],
     "obstacle" : [7,12,15,21],
     "end":[['coralEndPoint',24]]
 }
-question_20 = {
+question_19 = {
     "start": [['nemoStartPoint',3]],
     "obstacle" : [8,12,15,19],
     "end":[['coralEndPoint',24]]
 }
+question_20 = {
+    "start": [['duckStartPoint',4]],
+    "obstacle" : [6,13,18],
+    "end":[['ducklingsEndPoint',20]]
+}
 question_21 = {
-    "start": [['monkeyStartPoint',1]],
-    "obstacle" : [6,8,13,15],
-    "end":[['bananaEndPoint',24]]
+    "start": [['duckStartPoint',0]],
+    "obstacle" : [2,11,18],
+    "end":[['ducklingsEndPoint',24]]
 }
 question_22 = {
+    "start": [['duckStartPoint',14]],
+    "obstacle" : [16,17,18,19],
+    "end":[['ducklingsEndPoint',24]]
+}
+question_23 = {
+    "start": [['duckStartPoint',0]],
+    "obstacle" : [6,12,15,17],
+    "end":[['ducklingsEndPoint',24]]
+}
+question_24 = {
+    "start": [['duckStartPoint',12]],
+    "obstacle" : [0,11,16,21],
+    "end":[['ducklingsEndPoint',20]]
+}
+question_25 = {
     "start": [['monkeyStartPoint',1]],
     "obstacle" : [6,8,13,15],
     "end":[['bananaEndPoint',24]]
 }
-question_100 = {
-    "start": [['bearStartPoint',12]],
-    "obstacle" : [8,13,18,23],
-    "end":[['honeyEndPoint',24]]
+question_26 = {
+    "start": [['monkeyStartPoint',22]],
+    "obstacle" : [11,17],
+    "end":[['bananaEndPoint',12]]
 }
-questionDict = {1:question_1,
-                2:question_2
+question_27 = {
+    "start": [['monkeyStartPoint',9]],
+    "obstacle" : [8,10,13],
+    "end":[['bananaEndPoint',20]]
+}
+question_28 = {
+    "start": [['monkeyStartPoint',0]],
+    "obstacle" : [1,10,12,19],
+    "end":[['bananaEndPoint',24]]
+}
+question_29 = {
+    "start": [['monkeyStartPoint',22]],
+    "obstacle" : [8,10,17],
+    "end":[['bananaEndPoint',3]]
+}
+questionDict = {
+                1:question_1,
+                2:question_2,
+                3:question_3,
+                4:question_4,
+                5:question_5,
+                6:question_6,
+                7:question_7,
+                8:question_8,
+                9:question_9,
+                10:question_10,
+                11:question_11,
+                12:question_12,
+                13:question_13,
+                14:question_14,
+                15:question_15,
+                16:question_16,
+                17:question_17,
+                18:question_18,
+                19:question_19,
+                20:question_20,
+                21:question_21,
+                22:question_22,
+                23:question_23,
+                24:question_24,
+                25:question_25,
+                26:question_26,
+                27:question_27,
+                28:question_28,
+                29:question_29,
                 }
 ############################################################################
 def gstreamer_pipeline(
@@ -298,7 +357,7 @@ def gstreamer_pipeline(
     capture_height=2464,
     display_width=1920, #102
     display_height=1080,#77
-    framerate=20,           # You can try higher FPS if needed
+    framerate=21,           # You can try higher FPS if needed
     flip_method=0,
 ):
     return (
@@ -319,41 +378,65 @@ def gstreamer_pipeline(
         )
     )
 
-def take_images():
-    if not cap.isOpened():
-        print("Camera could not be opened.")
-        return
+# def take_images():
 
-    start_time = time.time()
-    image_1_saved = False
-    image_2_saved = False
+#     start_time = time.time()
+#     image_1_saved = False
+#     image_2_saved = False
+#     image_3_saved = False
+#     image_4_saved = False
+#     image_5_saved = False
 
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            print("Failed to read frame")
-            break
+#     GPIO.output(SERVO_PIN, GPIO.HIGH)
+#     while True:
+#         ret, frame = cap.read()
+#         if not ret:
+#             print("Failed to read frame")
+#             break
 
-        current_time = time.time()
-        elapsed = current_time - start_time
+#         current_time = time.time()
+#         elapsed = current_time - start_time
 
-        if not image_1_saved and elapsed >= 0.5:
-            cv2.imwrite("image_1.png", frame)
-            print("Saved image_1.png at", elapsed, "seconds")
-            image_1_saved = True
+#         if not image_1_saved and elapsed >= 0.4:
+#             cv2.imwrite("image_1.png", frame)
+#             print("Saved image_1.png at", elapsed, "seconds")
+#             image_1_saved = True
+#             GPIO.output(SERVO_PIN, GPIO.LOW)
 
    
-        if not image_2_saved and elapsed >= 2:
-            cv2.imwrite("image_2.png", frame)
-            print("Saved image_2.png at", elapsed, "seconds")
-            image_2_saved = True
-            break  
+#         if not image_2_saved and elapsed >= 0.8:
+#             cv2.imwrite("image_2.png", frame)
+#             print("Saved image_2.png at", elapsed, "seconds")
+#             image_2_saved = True
+#             GPIO.output(SERVO_PIN, GPIO.HIGH)
+        
+#         if not image_3_saved and elapsed >= 1.4:
+#             cv2.imwrite("image_3.png", frame)
+#             print("Saved image_3.png at", elapsed, "seconds")
+#             image_3_saved = True
+#             GPIO.output(SERVO_PIN, GPIO.LOW)
+        
+#         if not image_4_saved and elapsed >= 1.9:
+#             cv2.imwrite("image_4.png", frame)
+#             print("Saved image_4.png at", elapsed, "seconds")
+#             image_4_saved = True
+#             GPIO.output(SERVO_PIN, GPIO.HIGH)
+            
+#         if not image_5_saved and elapsed >= 2.5:
+#             cv2.imwrite("image_5.png", frame)
+#             print("Saved image_5.png at", elapsed, "seconds")
+#             image_5_saved = True
+#             GPIO.output(SERVO_PIN, GPIO.LOW)
+#             break
+
+
             
 ############################################################################
 def main():
     #At start: 
     QUESTION_BUT_PIN = 24
     ANSWER_BUT_PIN = 18
+    global SERVO_PIN
     SERVO_PIN = 16
     LED_PIN = 12 
     GPIO.setmode(GPIO.BOARD)
@@ -364,49 +447,146 @@ def main():
     GPIO.add_event_detect(QUESTION_BUT_PIN, GPIO.RISING, bouncetime=200)
     GPIO.add_event_detect(ANSWER_BUT_PIN, GPIO.RISING, bouncetime=200)
 
-    randomNumber = random.randint(1,2)
-    randomQuestion  = questionDict[randomNumber]
 
     GPIO.output(LED_PIN, GPIO.HIGH)
     GPIO.output(SERVO_PIN,GPIO.LOW)
-    #send question to display screen
+    #Display main start screen code here (Artboard 1)
 
-    global cap
-    cap = cv2.VideoCapture(gstreamer_pipeline(), cv2.CAP_GSTREAMER)
+    #start cam
+    # global cap
+    # cap = cv2.VideoCapture(gstreamer_pipeline(), cv2.CAP_GSTREAMER)
+
+    camera = Camera()
+    window_title = "CSI Camera"
+    
+    capturing_images = False
+    capturing_stage = 0
   
     while True:
-    
+        image = camera.capture()
+        
+        # question button pressed, randomize question from question dict
         if GPIO.event_detected(QUESTION_BUT_PIN):
             print('change question')
-            randomNumber = random.randint(1,2)
+            randomNumber = random.randint(2,29)
             randomQuestion  = questionDict[randomNumber]
-            # send new question to display screen
+            # send question to display screen accordingly, note: question 1 = Artboard 2 .... question 29 = Artboard 30
 
-        if GPIO.event_detected(ANSWER_BUT_PIN):
+        if GPIO.event_detected(ANSWER_BUT_PIN) and not capturing_images:
+            capturing_images = True
+            start_time = time.time()
             print('check answer')
-            GPIO.output(LED_PIN, GPIO.LOW)
+            GPIO.output(LED_PIN, GPIO.LOW) #turn on light
+            GPIO.output(SERVO_PIN, GPIO.HIGH)
+        
+        if capturing_images:
+            current_time = time.time()
+            elapsed = current_time - start_time
 
-            GPIO.output(SERVO_PIN,GPIO.HIGH)
-            time.sleep(0.1)
-            GPIO.output(SERVO_PIN, GPIO.LOW)
+            if capturing_stage == 0:
+                if elapsed > 1:
+                    cv2.imwrite("image_1.png", image)
+                    print("Saved image_1.png")
+                    start_time = time.time()
+                    GPIO.output(SERVO_PIN, GPIO.LOW)
+                    capturing_stage = 1
             
-            take_images()
-            time.sleep(0.7)
-            GPIO.output(LED_PIN, GPIO.HIGH)
+            elif capturing_stage == 1:
+                if elapsed > 1:
+                    cv2.imwrite("image_2.png", image)
+                    print("Saved image_2.png")
+                    start_time = time.time()
+                    GPIO.output(SERVO_PIN, GPIO.HIGH)
+                    capturing_stage = 2
 
-            #camera take pic and crop image into 25 qr images
+            elif capturing_stage == 2:
+                if elapsed > 1:
+                    cv2.imwrite("image_3.png", image)
+                    print("Saved image_3.png")
+                    start_time = time.time()
+                    GPIO.output(SERVO_PIN, GPIO.LOW)
+                    capturing_stage = 3
+
+            elif capturing_stage == 3:
+                if elapsed > 1:
+                    cv2.imwrite("image_4.png", image)
+                    print("Saved image_4.png")
+                    start_time = time.time()
+                    GPIO.output(SERVO_PIN, GPIO.HIGH)
+                    capturing_stage = 4
+
+            elif capturing_stage == 4:
+                if elapsed > 1:
+                    cv2.imwrite("image_5.png", image)
+                    print("Saved image_5.png")
+                    start_time = time.time()
+                    GPIO.output(SERVO_PIN, GPIO.LOW)
+                    GPIO.output(LED_PIN, GPIO.HIGH) #turn off light
+                    capturing_stage = 0
+                    capturing_images = False
+                
+
+
+
+            
+
+            # take_images() #take images while rotating the servo
+            # GPIO.output(SERVO_PIN, GPIO.HIGH)
+            # time.sleep(0.6)
+            # image = camera.capture()
+            # cv2.imwrite("image_1.png", image)
+            # print("Saved image_1.png")
+            # time.sleep(1)
+
+            # GPIO.output(SERVO_PIN, GPIO.LOW)
+            # time.sleep(0.6)
+            # image = camera.capture()
+            # cv2.imwrite("image_2.png", image)
+            # print("Saved image_2.png")
+            # time.sleep(1)
+
+            # GPIO.output(SERVO_PIN, GPIO.HIGH)
+            # time.sleep(0.6)
+            # image = camera.capture()
+            # cv2.imwrite("image_3.png", image)
+            # print("Saved image_3.png")
+            # time.sleep(1)
+
+            # GPIO.output(SERVO_PIN, GPIO.LOW)
+            # time.sleep(0.6)
+            # image = camera.capture()
+            # cv2.imwrite("image_4.png", image)
+            # print("Saved image_4.png")
+            # time.sleep(1)
+
+            # GPIO.output(SERVO_PIN, GPIO.HIGH)
+            # time.sleep(0.6)
+            # image = camera.capture()
+            # cv2.imwrite("image_5.png", image)
+            # print("Saved image_5.png")
+            # time.sleep(0.3)
+
+            # GPIO.output(SERVO_PIN, GPIO.LOW)
+            # GPIO.output(LED_PIN, GPIO.HIGH) #turn off light
+
+            ####insert cropping code here####
+
+
+            #################################
+
+            #transform all 25 cropped images into hughe matrix
             # QR_matrix = None
             # concatenate_matrix = None
             # for i in range(25):
             #     img = cv2.imread(f"croppedQR_{i}.png")
             #     decoded = decode(img)
 
-            #     if len(decoded) == 0:
-            #         temp = pathDict['emptyPath']
-            #     else:
-            #         barcode = decoded[0]
-            #         myData = barcode.data.decode('utf-8')
-            #         temp = fixMatrixOrientation(pathDict[myData], barcode.orientation)
+                # if len(decoded) == 0:
+                #     temp = pathDict['emptyPath'] #unreadable qr default to empty path
+                # else:
+                #     barcode = decoded[0]
+                #     myData = barcode.data.decode('utf-8')
+                #     temp = fixMatrixOrientation(pathDict[myData], barcode.orientation)
 
             #     if concatenate_matrix is None:
             #         concatenate_matrix = temp
@@ -428,51 +608,24 @@ def main():
             #         for i in range(len(tempQuestion['start'])):
             #             if tempQuestion['start'][i][0] == 'bearStartPoint':
             #                 if Astar(2,3,1,QR_matrix) == "Not Connected":
-            #                     return "Incorrect Path"
+            #                     return "Invalid Path"
             #             elif tempQuestion['start'][i][0] == 'monkeyStartPoint':
             #                 if Astar(4,5,1,QR_matrix) == "Not Connected":
-            #                     return "Incorrect Path"
+            #                     return "Invalid Path"
             #             elif tempQuestion['start'][i][0] == 'duckStartPoint':
             #                 if Astar(7,8,6,QR_matrix) == "Not Connected":
-            #                     return "Incorrect Path"
+            #                     return "Invalid Path"
             #             elif tempQuestion['start'][i][0] == 'nemoStartPoint':
             #                 if Astar(9,10,6,QR_matrix) == "Not Connected":
-            #                     return "Incorrect Path"
+            #                     return "Invalid Path"
             #         return "Correct Pathing"
             #     else:
             #         return "Incorrect Path Placement"
     
-        time.sleep(0.1)
+        # time.sleep(0.1)
 
 if __name__ == '__main__':
-    main()
-
-
-
-    #check answer button pressed:
-    
-
-
-    # QR_matrix set for debugging
-#     QR_matrix = np.array([
-# [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-# [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0],
-# [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0],
-# [0, 0, 0, 0, 0, 0, 0, 1, 0, 11, 11, 11, 0, 1, 0],
-# [0, 0, 0, 0, 0, 0, 0, 1, 0, 11, 11, 11, 0, 1, 0],
-# [0, 0, 0, 0, 0, 0, 0, 1, 0, 11, 11, 11, 0, 1, 0],
-# [0, 0, 0, 0, 0, 0, 0, 1, 0, 11, 11, 11, 0, 1, 0],
-# [0, 0, 0, 0, 0, 0, 1, 2, 1, 11, 11, 11, 0, 1, 0],
-# [0, 0, 0, 0, 0, 0, 0, 1, 0, 11, 11, 11, 0, 1, 0],
-# [0, 0, 0, 0, 0, 0, 0, 1, 0, 11, 11, 11, 0, 1, 0],
-# [0, 0, 0, 0, 0, 0, 0, 1, 0, 11, 11, 11, 0, 1, 0],
-# [0, 0, 0, 0, 0, 0, 0, 1, 0, 11, 11, 11, 0, 1, 0],
-# [0, 0, 0, 0, 0, 0, 0, 1, 0, 11, 11, 11, 0, 1, 0],
-# [0, 0, 0, 0, 0, 0, 0, 1, 0, 11, 11, 11, 1, 3, 1],
-# [0, 0, 0, 0, 0, 0, 0, 1, 0, 11, 11, 11, 0, 1, 0] ])
-    
-
-
+    main() #main will return either "Correct Pathing", "Invalid Path", or Incorrect Path Placement" use this for speaker
 
 #Land path ID: 1
 #bear ID: 2

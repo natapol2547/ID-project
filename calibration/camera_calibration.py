@@ -10,14 +10,14 @@ import pickle # Alternative: np.savez for numpy arrays
 # Number of internal corners of the checkerboard
 # If your checkerboard is 7x5 SQUARES, then it's (7-1)x(5-1) = 6x4 internal corners.
 # Adjust if your definition of "7x5" is different (e.g., 7x5 internal corners directly).
-CHECKERBOARD_ROWS = 10  # Number of squares along the height - 1
-CHECKERBOARD_COLS = 7  # Number of squares along the width - 1
+CHECKERBOARD_ROWS = 7  # Number of squares along the height - 1
+CHECKERBOARD_COLS = 6  # Number of squares along the width - 1
 INTERNAL_CORNERS_SHAPE = (CHECKERBOARD_COLS - 1, CHECKERBOARD_ROWS - 1) # (cols-1, rows-1) -> (6,4)
 
 # Square size (in any consistent unit, e.g., mm, cm, m).
 # This is only important if you want to measure real-world distances later.
 # For distortion correction alone, it can be set to 1.
-SQUARE_SIZE = 1.0  # e.g., 2.5 for 2.5 cm squares
+SQUARE_SIZE = 1.6  # e.g., 2.5 for 2.5 cm squares
 
 IMAGE_DIR = "calibration_images"
 SUPPORTED_FORMATS = ('*.jpg', '*.jpeg', '*.png', '*.bmp', '*.tif', '*.tiff')

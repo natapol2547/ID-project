@@ -6,6 +6,7 @@
 # Drivers for the camera and OpenCV are included in the base image
 
 import cv2
+from calibration.camera_calibration_read import load_calibration_data
 
 """ 
 gstreamer_pipeline returns a GStreamer pipeline for capturing from the CSI camera
@@ -16,11 +17,11 @@ Default 1920x1080 displayd in a 1/4 size window
 
 def gstreamer_pipeline(
     sensor_id=0,
-    capture_width=1920,
-    capture_height=1080,
-    display_width=1920,
-    display_height=1080,
-    framerate=24,
+    capture_width=3280,
+    capture_height=2464,
+    display_width=1640,
+    display_height=1232,
+    framerate=21,
     flip_method=5,
 ):
     return (
@@ -45,6 +46,12 @@ def gstreamer_pipeline(
 def show_camera():
     window_title = "Wide FOV CSI Camera"
 
+    mtx, dist = load_calibration_data()
+    w = 1920
+    h = 1080
+    new_camera_mtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 0, (w, h))
+    _mapx, _mapy = cv2.initUndistortRectifyMap(mtx, dist, None, new_camera_mtx, (w, h), cv2.CV_32FC1)
+
     # To flip the image, modify the flip_method parameter (0 and 2 are the most common)
     print(gstreamer_pipeline(flip_method=0))
     video_capture = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
@@ -53,6 +60,9 @@ def show_camera():
             window_handle = cv2.namedWindow(window_title, cv2.WINDOW_AUTOSIZE)
             while True:
                 ret_val, frame = video_capture.read()
+                frame = cv2.remap(frame, _mapx, _mapy, cv2.INTER_LINEAR)
+                x, y, w, h = roi
+                frame = frame[y:y+h, x:x+w]
                 # Check to see if the user closed the window
                 # Under GTK+ (Jetson Default), WND_PROP_VISIBLE does not work correctly. Under Qt it does
                 # GTK - Substitute WND_PROP_AUTOSIZE to detect if window has been closed by user
