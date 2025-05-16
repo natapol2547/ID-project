@@ -239,22 +239,6 @@ def gstreamer_pipeline(
         )
     )
 
-def take_images(camera:Camera): #* returns a list of 5 image paths
-    imagePaths = []
-    for i in range(5):
-            while True:
-                elapsed = time.time() - start_time
-                if elapsed > 1:
-                    GPIO.output(SERVO_PIN, GPIO.HIGH)
-                    cv2.imwrite(f"image_{i}.png", camera.capture())
-                    imagePaths.append(f"image_{i}.png")
-                    print(f"Saved image_{i}.png")
-                    GPIO.output(SERVO_PIN, GPIO.LOW)
-                    start_time = time.time()
-                    break
-                    
-    return imagePaths
-
 def imageToMatrix(imagePaths:dict):
     assert len(imagePaths) == 25, "Image paths must be a list of 25 images"
     QR_matrix = None
@@ -304,7 +288,19 @@ def checkAnswerCorrectBool(questionData, QR_matrix)->bool:
         return True
     else:
         return False
-
+      
+def take_images(camera:Camera):
+    start_time = time.time()
+    for i in range(5):
+        while True:
+            elapsed = time.time() - start_time
+            if elapsed > 1:
+                cv2.imwrite(f"image_{i}.png", camera.capture())
+                print(f"Saved image_{i}.png")
+                GPIO.output(SERVO_PIN, GPIO.HIGH)
+                GPIO.output(SERVO_PIN, GPIO.LOW)
+                start_time = time.time()
+                break
 ############################################################################
 def main():
     #At start: 
@@ -339,7 +335,6 @@ def main():
 
         if GPIO.event_detected(ANSWER_PIN) and not capturing_images:
             capturing_images = True
-            start_time = time.time()
             print('check answer')
             GPIO.output(LED_PIN, GPIO.LOW) #turn on light
             imagePaths = take_images(camera) #take images while rotating the servo
