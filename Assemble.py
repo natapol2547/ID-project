@@ -164,182 +164,53 @@ pathDict = {
 }
 
 #question dict area#
-question_1 = {
-    "start": [['bearStartPoint',0]],
-    "obstacle" : [1,9,11,22],
-    "end":[['honeyEndPoint',23]]
-}
-question_2 = {
-    "start": [['bearStartPoint',8]],
-    "obstacle" : [7,13,16],
-    "end":[['honeyEndPoint',12]]
-}
-question_3 = {
-    "start": [['bearStartPoint',10]],
-    "obstacle" : [7,11,13],
-    "end":[['honeyEndPoint',14]]
-}
-question_4 = {
-    "start": [['bearStartPoint',0]],
-    "obstacle" : [7,13,15,21],
-    "end":[['honeyEndPoint',24]]
-}
-question_5 = {
-    "start": [['bearStartPoint',0]],
-    "obstacle" : [6,8,16,18],
-    "end":[['honeyEndPoint',24]]
-}
-question_6 = {
-    "start": [['bearStartPoint',9]],
-    "obstacle" : [4,14,16,22],
-    "end":[['honeyEndPoint',21]]
-}
-question_7 = {
-    "start": [['bearStartPoint',3]],
-    "obstacle" : [8,16],
-    "end":[['honeyEndPoint',20]]
-}
-question_8 = {
-    "start": [['bearStartPoint',9]],
-    "obstacle" : [3,16,17],
-    "end":[['honeyEndPoint',21]]
-}
-question_9 = {
-    "start": [['bearStartPoint',7]],
-    "obstacle" : [2,11,17,18],
-    "end":[['honeyEndPoint',22]]
-}
-question_10 = {
-    "start": [['bearStartPoint',0]],
-    "obstacle" : [5,12,16],
-    "end":[['honeyEndPoint',17]]
-}
-question_11 = {
-    "start": [['bearStartPoint',1]],
-    "obstacle" : [2,5,16],
-    "end":[['honeyEndPoint',21]]
-}
-question_12 = {
-    "start": [['bearStartPoint',14]],
-    "obstacle" : [8,10,16,19],
-    "end":[['honeyEndPoint',15]]
-}
-question_13 = {
-    "start": [['bearStartPoint',23]],
-    "obstacle" : [4,11,18],
-    "end":[['honeyEndPoint',6]]
-}
-question_14 = {
-    "start": [['bearStartPoint',23]],
-    "obstacle" : [8,10,18,22],
-    "end":[['honeyEndPoint',2]]
-}
-question_15 = {
-    "start": [['nemoStartPoint',11]],
-    "obstacle" : [6,12,14,19],
-    "end":[['coralEndPoint',13]]
-}
-question_16 = {
-    "start": [['nemoStartPoint',15]],
-    "obstacle" : [10,18],
-    "end":[['coralEndPoint',4]]
-}
-question_17 = {
-    "start": [['nemoStartPoint',1]],
-    "obstacle" : [7,13,15,20],
-    "end":[['coralEndPoint',24]]
-}
-question_18 = {
-    "start": [['nemoStartPoint',1]],
-    "obstacle" : [7,12,15,21],
-    "end":[['coralEndPoint',24]]
-}
-question_19 = {
-    "start": [['nemoStartPoint',3]],
-    "obstacle" : [8,12,15,19],
-    "end":[['coralEndPoint',24]]
-}
-question_20 = {
-    "start": [['duckStartPoint',4]],
-    "obstacle" : [6,13,18],
-    "end":[['ducklingsEndPoint',20]]
-}
-question_21 = {
-    "start": [['duckStartPoint',0]],
-    "obstacle" : [2,11,18],
-    "end":[['ducklingsEndPoint',24]]
-}
-question_22 = {
-    "start": [['duckStartPoint',14]],
-    "obstacle" : [16,17,18,19],
-    "end":[['ducklingsEndPoint',24]]
-}
-question_23 = {
-    "start": [['duckStartPoint',0]],
-    "obstacle" : [6,12,15,17],
-    "end":[['ducklingsEndPoint',24]]
-}
-question_24 = {
-    "start": [['duckStartPoint',12]],
-    "obstacle" : [0,11,16,21],
-    "end":[['ducklingsEndPoint',20]]
-}
-question_25 = {
-    "start": [['monkeyStartPoint',1]],
-    "obstacle" : [6,8,13,15],
-    "end":[['bananaEndPoint',24]]
-}
-question_26 = {
-    "start": [['monkeyStartPoint',22]],
-    "obstacle" : [11,17],
-    "end":[['bananaEndPoint',12]]
-}
-question_27 = {
-    "start": [['monkeyStartPoint',9]],
-    "obstacle" : [8,10,13],
-    "end":[['bananaEndPoint',20]]
-}
-question_28 = {
-    "start": [['monkeyStartPoint',0]],
-    "obstacle" : [1,10,12,19],
-    "end":[['bananaEndPoint',24]]
-}
-question_29 = {
-    "start": [['monkeyStartPoint',22]],
-    "obstacle" : [8,10,17],
-    "end":[['bananaEndPoint',3]]
-}
+# Define a base question template
+def create_question(start_type, start_pos, obstacle_positions, end_type, end_pos):
+    return {
+        "start": [[start_type, start_pos]],
+        "obstacle": obstacle_positions,
+        "end": [[end_type, end_pos]]
+    }
+
+# Group questions by animal type
 questionDict = {
-                1:question_1,
-                2:question_2,
-                3:question_3,
-                4:question_4,
-                5:question_5,
-                6:question_6,
-                7:question_7,
-                8:question_8,
-                9:question_9,
-                10:question_10,
-                11:question_11,
-                12:question_12,
-                13:question_13,
-                14:question_14,
-                15:question_15,
-                16:question_16,
-                17:question_17,
-                18:question_18,
-                19:question_19,
-                20:question_20,
-                21:question_21,
-                22:question_22,
-                23:question_23,
-                24:question_24,
-                25:question_25,
-                26:question_26,
-                27:question_27,
-                28:question_28,
-                29:question_29,
-                }
+    # Bear questions (1-14)
+    1: create_question('bearStartPoint', 0, [1, 9, 11, 22], 'honeyEndPoint', 23),
+    2: create_question('bearStartPoint', 8, [7, 13, 16], 'honeyEndPoint', 12),
+    3: create_question('bearStartPoint', 10, [7, 11, 13], 'honeyEndPoint', 14),
+    4: create_question('bearStartPoint', 0, [7, 13, 15, 21], 'honeyEndPoint', 24),
+    5: create_question('bearStartPoint', 0, [6, 8, 16, 18], 'honeyEndPoint', 24),
+    6: create_question('bearStartPoint', 9, [4, 14, 16, 22], 'honeyEndPoint', 21),
+    7: create_question('bearStartPoint', 3, [8, 16], 'honeyEndPoint', 20),
+    8: create_question('bearStartPoint', 9, [3, 16, 17], 'honeyEndPoint', 21),
+    9: create_question('bearStartPoint', 7, [2, 11, 17, 18], 'honeyEndPoint', 22),
+    10: create_question('bearStartPoint', 0, [5, 12, 16], 'honeyEndPoint', 17),
+    11: create_question('bearStartPoint', 1, [2, 5, 16], 'honeyEndPoint', 21),
+    12: create_question('bearStartPoint', 14, [8, 10, 16, 19], 'honeyEndPoint', 15),
+    13: create_question('bearStartPoint', 23, [4, 11, 18], 'honeyEndPoint', 6),
+    14: create_question('bearStartPoint', 23, [8, 10, 18, 22], 'honeyEndPoint', 2),
+    
+    # Nemo questions (15-19)
+    15: create_question('nemoStartPoint', 11, [6, 12, 14, 19], 'coralEndPoint', 13),
+    16: create_question('nemoStartPoint', 15, [10, 18], 'coralEndPoint', 4),
+    17: create_question('nemoStartPoint', 1, [7, 13, 15, 20], 'coralEndPoint', 24),
+    18: create_question('nemoStartPoint', 1, [7, 12, 15, 21], 'coralEndPoint', 24),
+    19: create_question('nemoStartPoint', 3, [8, 12, 15, 19], 'coralEndPoint', 24),
+    
+    # Duck questions (20-24)
+    20: create_question('duckStartPoint', 4, [6, 13, 18], 'ducklingsEndPoint', 20),
+    21: create_question('duckStartPoint', 0, [2, 11, 18], 'ducklingsEndPoint', 24),
+    22: create_question('duckStartPoint', 14, [16, 17, 18, 19], 'ducklingsEndPoint', 24),
+    23: create_question('duckStartPoint', 0, [6, 12, 15, 17], 'ducklingsEndPoint', 24),
+    24: create_question('duckStartPoint', 12, [0, 11, 16, 21], 'ducklingsEndPoint', 20),
+    
+    # Monkey questions (25-29)
+    25: create_question('monkeyStartPoint', 1, [6, 8, 13, 15], 'bananaEndPoint', 24),
+    26: create_question('monkeyStartPoint', 22, [11, 17], 'bananaEndPoint', 12),
+    27: create_question('monkeyStartPoint', 9, [8, 10, 13], 'bananaEndPoint', 20),
+    28: create_question('monkeyStartPoint', 0, [1, 10, 12, 19], 'bananaEndPoint', 24),
+    29: create_question('monkeyStartPoint', 22, [8, 10, 17], 'bananaEndPoint', 3)
+}
 ############################################################################
 def gstreamer_pipeline(
     sensor_id=0,
@@ -368,6 +239,56 @@ def gstreamer_pipeline(
         )
     )
 
+def imageToMatrix(imagePaths:dict):
+    assert len(imagePaths) == 25, "Image paths must be a list of 25 images"
+    QR_matrix = None
+    concatenate_matrix = None
+    for i in range(25):
+        # img = cv2.imread(f"croppedQR_{i}.png")
+        img = cv2.imread(imagePaths[i])
+        decoded = decode(img)
+
+        if len(decoded) == 0:
+            temp = pathDict['emptyPath'] #unreadable qr default to empty path
+        else:
+            barcode = decoded[0]
+            myData = barcode.data.decode('utf-8')
+            temp = fixMatrixOrientation(pathDict[myData], barcode.orientation)
+
+        if concatenate_matrix is None:
+            concatenate_matrix = temp
+        else:
+            concatenate_matrix = np.concatenate((concatenate_matrix, temp), axis=1)
+
+        if i % 5 == 4:
+            if QR_matrix is None:
+                QR_matrix = concatenate_matrix
+            else:
+                QR_matrix = np.concatenate((QR_matrix, concatenate_matrix), axis=0)
+            concatenate_matrix = None
+    
+    return QR_matrix
+
+def checkAnswerCorrectBool(questionData, QR_matrix)->bool:
+    if checkTilePlacement(questionData,QR_matrix) == True:
+        print("Correct Placement")
+        for i in range(len(questionData['start'])):
+            if questionData['start'][i][0] == 'bearStartPoint':
+                if Astar(2,3,1,QR_matrix) == "Not Connected":
+                    return "Invalid Path"
+            elif questionData['start'][i][0] == 'monkeyStartPoint':
+                if Astar(4,5,1,QR_matrix) == "Not Connected":
+                    return "Invalid Path"
+            elif questionData['start'][i][0] == 'duckStartPoint':
+                if Astar(7,8,6,QR_matrix) == "Not Connected":
+                    return "Invalid Path"
+            elif questionData['start'][i][0] == 'nemoStartPoint':
+                if Astar(9,10,6,QR_matrix) == "Not Connected":
+                    return "Invalid Path"
+        return True
+    else:
+        return False
+      
 def take_images(camera:Camera):
     start_time = time.time()
     for i in range(5):
@@ -380,22 +301,21 @@ def take_images(camera:Camera):
                 GPIO.output(SERVO_PIN, GPIO.LOW)
                 start_time = time.time()
                 break
-
 ############################################################################
 def main():
     #At start: 
-    QUESTION_BUT_PIN = 24
-    ANSWER_BUT_PIN = 18
+    QUESTION_PIN = 24
+    ANSWER_PIN = 18
     global SERVO_PIN
     SERVO_PIN = 16
     LED_PIN = 12 
     GPIO.setmode(GPIO.BOARD)
-    GPIO.setup(QUESTION_BUT_PIN, GPIO.IN)
-    GPIO.setup(ANSWER_BUT_PIN, GPIO.IN) 
+    GPIO.setup(QUESTION_PIN, GPIO.IN)
+    GPIO.setup(ANSWER_PIN, GPIO.IN) 
     GPIO.setup(SERVO_PIN, GPIO.OUT)
     GPIO.setup(LED_PIN, GPIO.OUT) 
-    GPIO.add_event_detect(QUESTION_BUT_PIN, GPIO.RISING, bouncetime=200)
-    GPIO.add_event_detect(ANSWER_BUT_PIN, GPIO.RISING, bouncetime=200)
+    GPIO.add_event_detect(QUESTION_PIN, GPIO.RISING, bouncetime=200)
+    GPIO.add_event_detect(ANSWER_PIN, GPIO.RISING, bouncetime=200)
 
     GPIO.output(LED_PIN, GPIO.HIGH)
     GPIO.output(SERVO_PIN,GPIO.LOW)
@@ -406,77 +326,32 @@ def main():
   
     while True:
         # question button pressed, randomize question from question dict
-        if GPIO.event_detected(QUESTION_BUT_PIN):
+        if GPIO.event_detected(QUESTION_PIN):
             print('change question')
             randomNumber = random.randint(2,29)
+            gameWindow.displayStage(randomNumber)
             randomQuestion  = questionDict[randomNumber]
             # send question to display screen accordingly, note: question 1 = Artboard 2 .... question 29 = Artboard 30
 
-        if GPIO.event_detected(ANSWER_BUT_PIN) and not capturing_images:
+        if GPIO.event_detected(ANSWER_PIN) and not capturing_images:
             capturing_images = True
             print('check answer')
             GPIO.output(LED_PIN, GPIO.LOW) #turn on light
-            take_images(camera) #take images while rotating the servo
+            imagePaths = take_images(camera) #take images while rotating the servo
             GPIO.output(LED_PIN, GPIO.HIGH) #turn off light
             capturing_images = False
-            ####insert cropping code here####
 
+            raise NotImplementedError("Insert cropping code here")
+            croppedImagePaths = "lmao" ####insert cropping code here####
+            stageMatrix = imageToMatrix(croppedImagePaths)
+            answerIsCorrect = checkAnswerCorrectBool(randomQuestion, stageMatrix)
+            
 
-            #################################
-
-            #transform all 25 cropped images into hughe matrix
-            # QR_matrix = None
-            # concatenate_matrix = None
-            # for i in range(25):
-            #     img = cv2.imread(f"croppedQR_{i}.png")
-            #     decoded = decode(img)
-
-                # if len(decoded) == 0:
-                #     temp = pathDict['emptyPath'] #unreadable qr default to empty path
-                # else:
-                #     barcode = decoded[0]
-                #     myData = barcode.data.decode('utf-8')
-                #     temp = fixMatrixOrientation(pathDict[myData], barcode.orientation)
-
-            #     if concatenate_matrix is None:
-            #         concatenate_matrix = temp
-            #     else:
-            #         concatenate_matrix = np.concatenate((concatenate_matrix, temp), axis=1)
-
-            #     if i % 5 == 4:
-            #         if QR_matrix is None:
-            #             QR_matrix = concatenate_matrix
-            #         else:
-            #             QR_matrix = np.concatenate((QR_matrix, concatenate_matrix), axis=0)
-            #         concatenate_matrix = None
-
-            #     print(QR_matrix)
-            #     # check correct placement and validness of path       
-            #     tempQuestion = questionDict[randomQuestion]
-            #     if checkTilePlacement(tempQuestion,QR_matrix) == True:
-            #         print("Correct Placement")
-            #         for i in range(len(tempQuestion['start'])):
-            #             if tempQuestion['start'][i][0] == 'bearStartPoint':
-            #                 if Astar(2,3,1,QR_matrix) == "Not Connected":
-            #                     return "Invalid Path"
-            #             elif tempQuestion['start'][i][0] == 'monkeyStartPoint':
-            #                 if Astar(4,5,1,QR_matrix) == "Not Connected":
-            #                     return "Invalid Path"
-            #             elif tempQuestion['start'][i][0] == 'duckStartPoint':
-            #                 if Astar(7,8,6,QR_matrix) == "Not Connected":
-            #                     return "Invalid Path"
-            #             elif tempQuestion['start'][i][0] == 'nemoStartPoint':
-            #                 if Astar(9,10,6,QR_matrix) == "Not Connected":
-            #                     return "Invalid Path"
-            #         return "Correct Pathing"
-            #     else:
-            #         return "Incorrect Path Placement"
-    
         # time.sleep(0.1)
 
 if __name__ == '__main__':
     main() #main will return either "Correct Pathing", "Invalid Path", or Incorrect Path Placement" use this for speaker
-
+            # ! main cannot return because it is the main program loop, this has been fixed
 #Land path ID: 1
 #bear ID: 2
 #honey ID: 3
