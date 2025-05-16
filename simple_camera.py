@@ -21,8 +21,8 @@ def gstreamer_pipeline(
     capture_height=2464,
     display_width=1640,
     display_height=1232,
-    framerate=21,
-    flip_method=5,
+    framerate=10,
+    flip_method=1,
 ):
     return (
         "nvarguscamerasrc sensor-id=%d ! "
@@ -47,8 +47,8 @@ def show_camera():
     window_title = "Wide FOV CSI Camera"
 
     mtx, dist = load_calibration_data()
-    w = 1920
-    h = 1080
+    w = 1640
+    h = 1232
     new_camera_mtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 0, (w, h))
     _mapx, _mapy = cv2.initUndistortRectifyMap(mtx, dist, None, new_camera_mtx, (w, h), cv2.CV_32FC1)
 

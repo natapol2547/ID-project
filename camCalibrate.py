@@ -45,7 +45,7 @@ class Camera():
         if mtx is None or dist is None:
             assert ValueError("Invalid calibration data")
         
-        newcameramtx, self.roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (width, height), 1, (width, height))
+        newcameramtx, self.roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (width, height), 0, (width, height))
         self._mapx, self._mapy = cv2.initUndistortRectifyMap(mtx, dist, None, newcameramtx, (width,height), cv2.CV_32FC1)
         self.video_capture = cv2.VideoCapture(gstreamer_pipeline(), cv2.CAP_GSTREAMER)
 
@@ -69,11 +69,11 @@ class Camera():
         # newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
         # undistort
         # dst = cv2.undistort(frame, mtx, dist, None, newcameramtx)
-        # frame = cv2.remap(frame, self._mapx, self._mapy, cv2.INTER_LINEAR)
+        frame = cv2.remap(frame, self._mapx, self._mapy, cv2.INTER_LINEAR)
 
         # crop the image
         x, y, w, h = self.roi
-        # frame = frame[y:y+h, x:x+w]
+        frame = frame[y:y+h, x:x+w]
         return frame
 
 
