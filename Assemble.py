@@ -5,13 +5,14 @@ import cv2
 import random
 import Jetson.GPIO as GPIO
 import time
+from gameWindow import GameWindow
 from camCalibrate import Camera
 
 #########area for QR code cropping def###########
 
 
 
-
+gameWindow = GameWindow("GameWIndow")
 
 
 

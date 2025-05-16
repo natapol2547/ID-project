@@ -28,10 +28,14 @@ class GameWindow(Window):
 
     def displayStage(self,stageNum:int = 1):
         assert stageNum <= len(self.images), "Stage number exceeds available images"
-        img = cv.imread(os.path.join(self.path, str(stageNum)))
+        img = cv.imread(os.path.join(self.path, stageNum))
         self.show(img)
+    
+    def displayAllStages(self):
+        for i in range(len(self.images)):
+            img = cv.imread(os.path.join(self.path, self.images[i]))
 
 if __name__ == "__main__":
     gameWindow = GameWindow("Game Name", r"./ui_interface")
-    gameWindow.displayStage()
+    gameWindow.displayAllStages()
     gameWindow.close()
