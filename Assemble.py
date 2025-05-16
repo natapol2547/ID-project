@@ -252,6 +252,7 @@ def take_images(camera:Camera): #* returns a list of 5 image paths
                     GPIO.output(SERVO_PIN, GPIO.LOW)
                     start_time = time.time()
                     break
+                    
     return imagePaths
 
 def imageToMatrix(imagePaths:dict):
@@ -303,7 +304,6 @@ def checkAnswerCorrectBool(questionData, QR_matrix)->bool:
         return True
     else:
         return False
-
 
 ############################################################################
 def main():
