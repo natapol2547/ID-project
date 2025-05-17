@@ -53,7 +53,7 @@ class Camera():
             size=calib_img_size, # Size of the image being remapped
             m1type=cv2.CV_32FC1
         )
-        self.video_capture = cv2.VideoCapture(0)
+        self.video_capture = cv2.VideoCapture(gstreamer_pipeline(), cv2.CAP_GSTREAMER)
 
     def __del__(self):
         if self.video_capture.isOpened():
