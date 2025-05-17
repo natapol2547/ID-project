@@ -6,7 +6,7 @@
 import time
 import cv2
 import traceback
-from calibration.camera_calibration_read import load_calibration_data
+from calibration.camera_calibration_read import load_calibration_data, zoom_image
 
 
 def gstreamer_pipeline(
@@ -40,13 +40,20 @@ class Camera():
     def __init__(self,width=1640, height=1232):
         self.window_title = "Wide FOV CSI Camera"
         window_handle = cv2.namedWindow(self.window_title, cv2.WINDOW_AUTOSIZE)
-        mtx, dist = load_calibration_data()
+        K, D, calib_img_size, self.zoom = load_calibration_data()
         
-        if mtx is None or dist is None:
+        if K is None or D is None:
             assert ValueError("Invalid calibration data")
         
-        self._mapx, self._mapy = cv2.initUndistortRectifyMap(mtx, dist, None, mtx, (width,height), cv2.CV_32FC1)
-        self.video_capture = cv2.VideoCapture(gstreamer_pipeline(), cv2.CAP_GSTREAMER)
+        self._mapx, self._mapy = cv2.initUndistortRectifyMap(
+            cameraMatrix=K,
+            distCoeffs=D,
+            R=None,
+            newCameraMatrix=K, # Use original K to prevent undistortion step from scaling
+            size=calib_img_size, # Size of the image being remapped
+            m1type=cv2.CV_32FC1
+        )
+        self.video_capture = cv2.VideoCapture(0)
 
     def __del__(self):
         if self.video_capture.isOpened():
@@ -64,6 +71,8 @@ class Camera():
         if cv2.getWindowProperty(self.window_title, cv2.WND_PROP_AUTOSIZE) >= 0:
             cv2.imshow(self.window_title, frame)
         # h,  w = frame.shape[:2]
+        
+        frame = zoom_image(frame, self.zoom) # Apply zoom if needed
         
         # Undistort the image
         frame = cv2.remap(frame, self._mapx, self._mapy, cv2.INTER_LINEAR)
