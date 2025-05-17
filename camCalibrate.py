@@ -45,8 +45,7 @@ class Camera():
         if mtx is None or dist is None:
             assert ValueError("Invalid calibration data")
         
-        newcameramtx, self.roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (width, height), 0, (width, height))
-        self._mapx, self._mapy = cv2.initUndistortRectifyMap(mtx, dist, None, newcameramtx, (width,height), cv2.CV_32FC1)
+        self._mapx, self._mapy = cv2.initUndistortRectifyMap(mtx, dist, None, mtx, (width,height), cv2.CV_32FC1)
         self.video_capture = cv2.VideoCapture(gstreamer_pipeline(), cv2.CAP_GSTREAMER)
 
     def __del__(self):
@@ -64,12 +63,11 @@ class Camera():
             print("Error: Could not read frame.")
         if cv2.getWindowProperty(self.window_title, cv2.WND_PROP_AUTOSIZE) >= 0:
             cv2.imshow(self.window_title, frame)
-        h,  w = frame.shape[:2]
+        # h,  w = frame.shape[:2]
+        
+        # Undistort the image
         frame = cv2.remap(frame, self._mapx, self._mapy, cv2.INTER_LINEAR)
 
-        # crop the image
-        x, y, w, h = self.roi
-        frame = frame[y:y+h, x:x+w]
         return frame
 
 
