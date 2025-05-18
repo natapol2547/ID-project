@@ -8,6 +8,13 @@ import time
 from gameWindow import GameWindow
 from camCalibrate import Camera
 from imageProcess import cropSlice, perspTransform
+from calibration.perspective_transform_read import correct_perspective_images
+from split_images import split_image
+import os
+
+CAPTURE_OUTPUT_DIR = "."
+PERS_OUTPUT_DIR = "perspective_corrected_images"
+SPLIT_OUTPUT_DIR = "split_images"
 
 def fixMatrixOrientation(data,direction):
     if direction == 'LEFT':
@@ -272,8 +279,9 @@ def take_images(camera:Camera):
             frame = camera.capture()
             elapsed = time.time() - start_time
             if elapsed > 1:
-                cv2.imwrite(f"image_{i}.png", frame)
-                imagePaths.append(f"image_{i}.png")
+                image_path = os.path.join(CAPTURE_OUTPUT_DIR, f"image_{i}.png")
+                imagePaths.append(image_path)
+                cv2.imwrite(image_path, frame)
                 print(f"Saved image_{i}.png")
                 GPIO.output(SERVO_PIN, GPIO.HIGH)
                 GPIO.output(SERVO_PIN, GPIO.LOW)
@@ -281,7 +289,6 @@ def take_images(camera:Camera):
                 break
     return imagePaths
 
-    
 
 def crop25Images(imagePaths:list):
     offset = 0
@@ -339,6 +346,11 @@ def main():
             GPIO.output(LED_PIN, GPIO.HIGH) #turn off light
             capturing_images = False
 
+            perspextive_corrected_images = correct_perspective_images(imagePaths, output_dir=PERS_OUTPUT_DIR)
+            splitted_images = split_image(perspextive_corrected_images, output_dir=SPLIT_OUTPUT_DIR, rows=1, cols=5)
+            stageMatrix = imageToMatrix(splitted_images)
+            answerIsCorrect = checkAnswerCorrectBool(randomQuestion, stageMatrix)
+            print(answerIsCorrect)
             # croppedImagePaths = crop25Images(imagePaths) #crop images into 5x5 matrix
             # stageMatrix = imageToMatrix(croppedImagePaths)
             # answerIsCorrect = checkAnswerCorrectBool(randomQuestion, stageMatrix)
@@ -347,7 +359,15 @@ def main():
         # time.sleep(0.1)
 
 if __name__ == '__main__':
-    main() #main will return either "Correct Pathing", "Invalid Path", or Incorrect Path Placement" use this for speaker
+    randomNumber = random.randint(2,29)
+    randomQuestion  = questionDict[randomNumber]
+    perspextive_corrected_images = correct_perspective_images([".\\image_0.png", ".\\image_1.png", ".\\image_2.png", ".\\image_3.png", ".\\image_4.png"], output_dir=PERS_OUTPUT_DIR)
+    splitted_images = split_image(perspextive_corrected_images, output_dir=SPLIT_OUTPUT_DIR, rows=1, cols=5)
+    stageMatrix = imageToMatrix(splitted_images)
+    print(stageMatrix)
+    answerIsCorrect = checkAnswerCorrectBool(randomQuestion, stageMatrix)
+    print(answerIsCorrect)
+    # main() #main will return either "Correct Pathing", "Invalid Path", or Incorrect Path Placement" use this for speaker
             # ! main cannot return because it is the main program loop, this has been fixed
 #Land path ID: 1
 #bear ID: 2
