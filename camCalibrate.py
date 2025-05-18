@@ -15,7 +15,7 @@ def gstreamer_pipeline(
     capture_height=2464,
     display_width=1640,
     display_height=1232,
-    framerate=10,           # You can try higher FPS if needed
+    framerate=5,           # You can try higher FPS if needed
     flip_method=0,
 ):
     return (
@@ -37,9 +37,11 @@ def gstreamer_pipeline(
     )
 
 class Camera():
-    def __init__(self,width=1640, height=1232):
+    def __init__(self,debug = False):
         self.window_title = "Wide FOV CSI Camera"
-        window_handle = cv2.namedWindow(self.window_title, cv2.WINDOW_AUTOSIZE)
+        self.debug = debug
+        if self.debug:
+            window_handle = cv2.namedWindow(self.window_title, cv2.WINDOW_AUTOSIZE)
         K, D, calib_img_size, self.zoom = load_calibration_data()
         
         if K is None or D is None:
@@ -68,14 +70,18 @@ class Camera():
         ret_val, frame = self.video_capture.read()
         if not ret_val:
             print("Error: Could not read frame.")
-        if cv2.getWindowProperty(self.window_title, cv2.WND_PROP_AUTOSIZE) >= 0:
-            cv2.imshow(self.window_title, frame)
-        # h,  w = frame.shape[:2]
+        
+        h,  w = frame.shape[:2]
         
         frame = zoom_image(frame, self.zoom) # Apply zoom if needed
         
         # Undistort the image
         frame = cv2.remap(frame, self._mapx, self._mapy, cv2.INTER_LINEAR)
+
+        if self.debug:
+            if cv2.getWindowProperty(self.window_title, cv2.WND_PROP_AUTOSIZE) >= 0:
+                cv2.imshow(self.window_title, frame)
+            cv2.waitKey(1)
 
         return frame
 

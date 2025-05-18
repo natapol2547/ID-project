@@ -269,9 +269,10 @@ def take_images(camera:Camera):
     imagePaths = []
     for i in range(5):
         while True:
+            frame = camera.capture()
             elapsed = time.time() - start_time
             if elapsed > 1:
-                cv2.imwrite(f"image_{i}.png", camera.capture())
+                cv2.imwrite(f"image_{i}.png", frame)
                 imagePaths.append(f"image_{i}.png")
                 print(f"Saved image_{i}.png")
                 GPIO.output(SERVO_PIN, GPIO.HIGH)
@@ -316,10 +317,12 @@ def main():
     GPIO.output(SERVO_PIN,GPIO.LOW)
     #Display main start screen code here (Artboard 1)
     
-    camera = Camera()
-    gameWindow = GameWindow("GameWIndow")
+    camera = Camera(debug = True)
+    gameWindow = GameWindow("GameWIndow", "ui_interface")
+    capturing_images = False
   
     while True:
+        camera.capture()
         # question button pressed, randomize question from question dict
         if GPIO.event_detected(QUESTION_PIN):
             print('change question')
@@ -336,9 +339,9 @@ def main():
             GPIO.output(LED_PIN, GPIO.HIGH) #turn off light
             capturing_images = False
 
-            croppedImagePaths = crop25Images(imagePaths) #crop images into 5x5 matrix
-            stageMatrix = imageToMatrix(croppedImagePaths)
-            answerIsCorrect = checkAnswerCorrectBool(randomQuestion, stageMatrix)
+            # croppedImagePaths = crop25Images(imagePaths) #crop images into 5x5 matrix
+            # stageMatrix = imageToMatrix(croppedImagePaths)
+            # answerIsCorrect = checkAnswerCorrectBool(randomQuestion, stageMatrix)
             
 
         # time.sleep(0.1)

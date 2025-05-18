@@ -6,7 +6,7 @@
 # Drivers for the camera and OpenCV are included in the base image
 
 import cv2
-from calibration.camera_calibration_read import load_calibration_data
+from calibration.camera_calibration_read import load_calibration_data, zoom_image
 
 """ 
 gstreamer_pipeline returns a GStreamer pipeline for capturing from the CSI camera
@@ -46,11 +46,17 @@ def gstreamer_pipeline(
 def show_camera():
     window_title = "Wide FOV CSI Camera"
 
-    mtx, dist = load_calibration_data()
+    K, D, calib_img_size, zoom = load_calibration_data()
     w = 1640
     h = 1232
-    new_camera_mtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 0, (w, h))
-    _mapx, _mapy = cv2.initUndistortRectifyMap(mtx, dist, None, new_camera_mtx, (w, h), cv2.CV_32FC1)
+    _mapx, _mapy = cv2.initUndistortRectifyMap(
+            cameraMatrix=K,
+            distCoeffs=D,
+            R=None,
+            newCameraMatrix=K, # Use original K to prevent undistortion step from scaling
+            size=calib_img_size, # Size of the image being remapped
+            m1type=cv2.CV_32FC1
+        )
 
     # To flip the image, modify the flip_method parameter (0 and 2 are the most common)
     print(gstreamer_pipeline(flip_method=0))
@@ -60,9 +66,8 @@ def show_camera():
             window_handle = cv2.namedWindow(window_title, cv2.WINDOW_AUTOSIZE)
             while True:
                 ret_val, frame = video_capture.read()
+                frame = zoom_image(frame, zoom) # Apply zoom if needed
                 frame = cv2.remap(frame, _mapx, _mapy, cv2.INTER_LINEAR)
-                x, y, w, h = roi
-                frame = frame[y:y+h, x:x+w]
                 # Check to see if the user closed the window
                 # Under GTK+ (Jetson Default), WND_PROP_VISIBLE does not work correctly. Under Qt it does
                 # GTK - Substitute WND_PROP_AUTOSIZE to detect if window has been closed by user
