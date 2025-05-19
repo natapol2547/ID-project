@@ -85,13 +85,14 @@ def save_configurations_to_json(image_paths):
         print("No configurations to save.")
         return
 
-    output_data = {}
+    output_data = []
     for i, config in enumerate(all_image_configurations):
-        output_data[image_paths[i]] = {
+        output_data.append({
+            "image_path": image_paths[i],
             "source_points": config["source_points"],
             "transformation_matrix": config["matrix"],
             "output_dimensions": config["output_dims"]
-        }
+        })
 
     try:
         with open(CONFIG_FILE_NAME, 'w') as f:

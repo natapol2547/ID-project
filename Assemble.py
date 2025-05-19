@@ -10,6 +10,7 @@ from camCalibrate import Camera
 from imageProcess import cropSlice, perspTransform
 from calibration.perspective_transform_read import correct_perspective_images
 from split_images import split_image
+from lightControl import Light
 import os
 
 CAPTURE_OUTPUT_DIR = "."
@@ -18,11 +19,11 @@ SPLIT_OUTPUT_DIR = "split_images"
 
 def fixMatrixOrientation(data,direction):
     if direction == 'LEFT':
-        data = np.rot90(data, k=3)
-    elif direction == 'DOWN':
+        data = np.rot90(data, k=1)
+    elif direction == 'UP':
         data = np.rot90(data, k=2)
     elif direction == 'RIGHT':
-        data = np.rot90(data, k=1)
+        data = np.rot90(data, k=3)
     return data
 
 ################code for checking if the initial tile placement is correct according to the question##############
@@ -235,6 +236,7 @@ def imageToMatrix(imagePaths:dict):
         else:
             barcode = decoded[0]
             myData = barcode.data.decode('utf-8')
+            print(myData, barcode.orientation)
             temp = fixMatrixOrientation(pathDict[myData], barcode.orientation)
 
         if concatenate_matrix is None:
@@ -272,13 +274,18 @@ def checkAnswerCorrectBool(questionData, QR_matrix)->bool:
         return False
       
 def take_images(camera:Camera):
+    # start_time = time.time()
+    # while True:
+    #     elapsed = time.time() - start_time
+    #     if elapsed > 2.5:
+    #         break
     start_time = time.time()
     imagePaths = []
     for i in range(5):
         while True:
             frame = camera.capture()
             elapsed = time.time() - start_time
-            if elapsed > 1:
+            if elapsed > 1.5:
                 image_path = os.path.join(CAPTURE_OUTPUT_DIR, f"image_{i}.png")
                 imagePaths.append(image_path)
                 cv2.imwrite(image_path, frame)
@@ -304,6 +311,9 @@ def crop25Images(imagePaths:list):
         [croppedImagePaths.append(path) for path in paths]
     return croppedImagePaths
 
+
+
+
 ############################################################################
 def main():
     #At start: 
@@ -316,41 +326,47 @@ def main():
     GPIO.setup(QUESTION_PIN, GPIO.IN)
     GPIO.setup(ANSWER_PIN, GPIO.IN) 
     GPIO.setup(SERVO_PIN, GPIO.OUT)
-    GPIO.setup(LED_PIN, GPIO.OUT) 
+    light = Light(LED_PIN)
     GPIO.add_event_detect(QUESTION_PIN, GPIO.RISING, bouncetime=200)
     GPIO.add_event_detect(ANSWER_PIN, GPIO.RISING, bouncetime=200)
 
-    GPIO.output(LED_PIN, GPIO.HIGH)
+    GPIO.output(LED_PIN, GPIO.LOW)
     GPIO.output(SERVO_PIN,GPIO.LOW)
     #Display main start screen code here (Artboard 1)
     
-    camera = Camera(debug = True)
-    gameWindow = GameWindow("GameWIndow", "ui_interface")
+    camera = Camera(debug=True)
+    gameWindow = GameWindow("GameWIndow", debug=True)
     capturing_images = False
+    randomStage = -1
   
     while True:
-        camera.capture()
+        camera.capture(correct_distortion=False)
         # question button pressed, randomize question from question dict
-        if GPIO.event_detected(QUESTION_PIN):
+        if randomStage == -1 or GPIO.event_detected(QUESTION_PIN):
             print('change question')
             randomNumber = random.randint(2,29)
             gameWindow.displayStage(randomNumber)
-            randomQuestion  = questionDict[randomNumber]
+            randomStage  = questionDict[randomNumber]
             # send question to display screen accordingly, note: question 1 = Artboard 2 .... question 29 = Artboard 30
 
-        if GPIO.event_detected(ANSWER_PIN) and not capturing_images:
+        if GPIO.event_detected(ANSWER_PIN) and not capturing_images and randomStage != -1:
             capturing_images = True
             print('check answer')
-            GPIO.output(LED_PIN, GPIO.LOW) #turn on light
+            # GPIO.output(LED_PIN, GPIO.LOW) #turn on light
             imagePaths = take_images(camera) #take images while rotating the servo
-            GPIO.output(LED_PIN, GPIO.HIGH) #turn off light
+            # GPIO.output(LED_PIN, GPIO.HIGH) #turn off light
             capturing_images = False
 
             perspextive_corrected_images = correct_perspective_images(imagePaths, output_dir=PERS_OUTPUT_DIR)
-            splitted_images = split_image(perspextive_corrected_images, output_dir=SPLIT_OUTPUT_DIR, rows=1, cols=5)
+            splitted_images = split_image(perspextive_corrected_images, output_dir=SPLIT_OUTPUT_DIR, rows=1, cols=5, overlap_percent=15)
             stageMatrix = imageToMatrix(splitted_images)
-            answerIsCorrect = checkAnswerCorrectBool(randomQuestion, stageMatrix)
-            print(answerIsCorrect)
+            print(stageMatrix)
+            placementIsCorrect = checkTilePlacement(randomStage, stageMatrix)
+            if placementIsCorrect:
+                answerIsCorrect = checkAnswerCorrectBool(randomStage, stageMatrix)
+                print(answerIsCorrect)
+            else:
+                print("Placement is not correct")
             # croppedImagePaths = crop25Images(imagePaths) #crop images into 5x5 matrix
             # stageMatrix = imageToMatrix(croppedImagePaths)
             # answerIsCorrect = checkAnswerCorrectBool(randomQuestion, stageMatrix)
@@ -359,15 +375,15 @@ def main():
         # time.sleep(0.1)
 
 if __name__ == '__main__':
-    randomNumber = random.randint(2,29)
-    randomQuestion  = questionDict[randomNumber]
-    perspextive_corrected_images = correct_perspective_images([".\\image_0.png", ".\\image_1.png", ".\\image_2.png", ".\\image_3.png", ".\\image_4.png"], output_dir=PERS_OUTPUT_DIR)
-    splitted_images = split_image(perspextive_corrected_images, output_dir=SPLIT_OUTPUT_DIR, rows=1, cols=5)
-    stageMatrix = imageToMatrix(splitted_images)
-    print(stageMatrix)
-    answerIsCorrect = checkAnswerCorrectBool(randomQuestion, stageMatrix)
-    print(answerIsCorrect)
-    # main() #main will return either "Correct Pathing", "Invalid Path", or Incorrect Path Placement" use this for speaker
+    # randomNumber = random.randint(2,29)
+    # randomQuestion  = questionDict[randomNumber]
+    # perspextive_corrected_images = correct_perspective_images(["image_0.png", "image_1.png", "image_2.png", "image_3.png", "image_4.png"], output_dir=PERS_OUTPUT_DIR)
+    # splitted_images = split_image(perspextive_corrected_images, output_dir=SPLIT_OUTPUT_DIR, rows=1, cols=5, overlap_percent=25)
+    # stageMatrix = imageToMatrix(splitted_images)
+    # print(stageMatrix)
+    # answerIsCorrect = checkAnswerCorrectBool(randomQuestion, stageMatrix)
+    # print(answerIsCorrect)
+    main() #main will return either "Correct Pathing", "Invalid Path", or Incorrect Path Placement" use this for speaker
             # ! main cannot return because it is the main program loop, this has been fixed
 #Land path ID: 1
 #bear ID: 2

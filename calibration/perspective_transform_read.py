@@ -2,6 +2,15 @@ import os
 import cv2
 import numpy as np
 import json
+import re
+
+def extract_number(text):
+    # Regular expression to find digits
+    match = re.search(r'\d+', text)
+    if match:
+        return int(match.group())
+    else:
+        return None
 
 CONFIG_FILE_NAME = "perspective_configs.json"
 PERS_OUTPUT_DIR = "perspective_corrected_images"
@@ -78,8 +87,9 @@ def correct_perspective_images(image_paths, config_path=CONFIG_FILE_NAME, output
 
     if configurations:
         for image_path in image_paths:
+            idx = extract_number(image_path)
             # Extract the base name of the image to find its corresponding config
-            config_entry = configurations.get(image_path)
+            config_entry = configurations[idx]
 
             if config_entry is None:
                 print(f"No configuration found for '{image_path}'. Skipping.")
