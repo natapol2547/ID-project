@@ -98,11 +98,13 @@ def undistort_and_show(img_to_process, K_for_undistort, D_local, window_name='Un
 
     if mapx is not None and mapy is not None:
         undistorted_img = cv2.remap(img_to_process, mapx, mapy, interpolation=cv2.INTER_LINEAR)
-        cv2.imshow(window_name, undistorted_img)
+        undistorted_img_S = cv2.resize(undistorted_img, (960, 540))
+        cv2.imshow(window_name, undistorted_img_S)
         current_D = D_local # current_K_orig, current_img_size_orig, current_zoom_factor are updated elsewhere
     else:
         print("Error: Could not compute undistortion maps.")
-        cv2.imshow(window_name, img_to_process)
+        img_to_process_S = cv2.resize(img_to_process, (960, 540))
+        cv2.imshow(window_name, img_to_process_S)
 
 # --- Callback for Trackbars ---
 def on_trackbar_change(_):
@@ -112,7 +114,7 @@ def on_trackbar_change(_):
     k2 = (cv2.getTrackbarPos('k2 (x1e-5)', 'Controls') - 5000) / 500.0
     p1 = (cv2.getTrackbarPos('p1 (x1e-4)', 'Controls') - 5000) / 10000.0
     p2 = (cv2.getTrackbarPos('p2 (x1e-4)', 'Controls') - 5000) / 10000.0
-    k3 = (cv2.getTrackbarPos('k3 (x1e-6)', 'Controls') - 5000) / 1000.0
+    k3 = (cv2.getTrackbarPos('k3 (x1e-6)', 'Controls') - 5000) / 500.0
     D_manual = np.array([k1, k2, p1, p2, k3], dtype=np.float32)
 
     # Zoom trackbar: e.g., 50 to 400. 100 is 1.0x.
@@ -124,7 +126,8 @@ def on_trackbar_change(_):
     print(f"Zoom: {current_zoom_factor:.2f}x | D: k1={k1:.5f}, k2={k2:.6f}, p1={p1:.5f}, p2={p2:.5f}, k3={k3:.7f}")
 
     img_processed = get_processed_image(img_original_loaded, current_zoom_factor)
-    cv2.imshow('Processed Input (Pre-Undistortion)', img_processed)
+    img_processed_S = cv2.resize(img_processed, (960, 540))
+    cv2.imshow('Processed Input (Pre-Undistortion)', img_processed_S)
 
     undistort_and_show(img_processed, K_initial_calc, D_manual)
 # --- Main ---
@@ -169,7 +172,8 @@ if __name__ == "__main__":
     print(f"Initial Zoom Factor: {initial_zoom_factor:.2f}")
 
     cv2.namedWindow('Original Image')
-    cv2.imshow('Original Image', img_original_loaded)
+    img_original_loaded_S = cv2.resize(img_original_loaded, (960, 540))
+    cv2.imshow('Original Image', img_original_loaded_S)
     cv2.namedWindow('Processed Input (Pre-Undistortion)')
     cv2.namedWindow('Controls', cv2.WINDOW_NORMAL)
     cv2.resizeWindow('Controls', 400, 350)
@@ -183,7 +187,7 @@ if __name__ == "__main__":
     cv2.createTrackbar('k2 (x1e-5)', 'Controls', int(initial_k2 * 500.0 + 5000), 10000, on_trackbar_change)
     cv2.createTrackbar('p1 (x1e-4)', 'Controls', int(initial_p1 * 10000.0 + 5000), 10000, on_trackbar_change)
     cv2.createTrackbar('p2 (x1e-4)', 'Controls', int(initial_p2 * 10000.0 + 5000), 10000, on_trackbar_change)
-    cv2.createTrackbar('k3 (x1e-6)', 'Controls', int(initial_k3 * 1000.0 + 5000), 10000, on_trackbar_change)
+    cv2.createTrackbar('k3 (x1e-6)', 'Controls', int(initial_k3 * 500.0 + 5000), 10000, on_trackbar_change)
     cv2.createTrackbar('Zoom (x100)', 'Controls', tb_zoom_initial, 400, on_trackbar_change) # Min 50 (by convention for createTrackbar, actual min is 0 unless enforced)
 
     # Manually set the minimum for the zoom trackbar if OpenCV doesn't directly support it
