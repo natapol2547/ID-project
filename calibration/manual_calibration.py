@@ -130,7 +130,7 @@ def on_trackbar_change(_):
 # --- Main ---
 if __name__ == "__main__":
     # --- Load the original image ---
-    IMAGE_PATH = './calibration_images/capture_20250516-162008.jpg' # <<< CHANGE THIS TO YOUR IMAGE
+    IMAGE_PATH = 'capture_20250519-092925.jpg' # <<< CHANGE THIS TO YOUR IMAGE
     img_original_loaded = cv2.imread(IMAGE_PATH)
     if img_original_loaded is None:
         print(f"Error: Could not load image at {IMAGE_PATH}")

@@ -2,11 +2,13 @@ import cv2 as cv
 import re
 import os
 
+UI_INTERFACE_DIR = "ui_interface"
+
 class Window:
     def __init__(self, winname: str):
         self.winname = winname
 
-    def show(self, img, fullscreen: bool = True, delay: int = 0):
+    def show(self, img, fullscreen: bool = True, delay: int = 1):
         cv.namedWindow(self.winname, cv.WINDOW_NORMAL)
         if fullscreen:
             cv.setWindowProperty(self.winname, cv.WND_PROP_FULLSCREEN, cv.WINDOW_FULLSCREEN)
@@ -19,21 +21,21 @@ class Window:
         cv.destroyWindow(self.winname)
 
 class GameWindow(Window):
-    def __init__(self, winname: str, path: str):
+    def __init__(self, winname: str, path = UI_INTERFACE_DIR, debug = False):
         super().__init__(winname)
         self.path = path
         self.images = os.listdir(path)
         self.images.sort(key=lambda x:int(re.findall(r"[0-9]+",x)[0]))  # Sort the images to ensure consistent order
-        self.fullscreen = True
+        self.fullscreen = not debug
 
     def displayStage(self,stageNum:int = 1):
         assert stageNum <= len(self.images), "Stage number exceeds available images"
-        img = cv.imread(os.path.join(self.path, stageNum))
+        img = cv.imread(os.path.join(self.path, self.images[stageNum]))
         self.show(img)
     
     def displayAllStages(self):
         for i in range(len(self.images)):
-            img = cv.imread(os.path.join(self.path, self.images[i]))
+            self.displayStage(i+1)
 
 if __name__ == "__main__":
     gameWindow = GameWindow("Game Name", r"./ui_interface")
