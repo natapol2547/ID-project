@@ -35,19 +35,19 @@ void loop() {
 
   switch (stage) {
     case 1:
-      myservo.write(pos + turnAngle2);
+      myservo.write(pos - turnAngle2);
       break;
     case 2:
-      myservo.write(pos + turnAngle1);
+      myservo.write(pos - turnAngle1);
       break;
     case 3:
       myservo.write(pos);
       break;
     case 4:
-      myservo.write(pos - turnAngle1);
+      myservo.write(pos + turnAngle1);
       break;
     case 5:
-      myservo.write(pos - turnAngle2);
+      myservo.write(pos + turnAngle2);
       break;
   }
 
