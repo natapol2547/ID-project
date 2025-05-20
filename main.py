@@ -6,7 +6,7 @@ import random
 import Jetson.GPIO as GPIO
 import time
 from gameWindow import GameWindow
-from gamePathLogic import checkTilePlacement, checkAnswerCorrectBool, imageToMatrix, questionDict
+from gamePathLogic import checkTilePlacement, checkAnswerCorrectBool, imageToMatrix, questionDict, findQuestionType
 from camCalibrate import Camera
 from calibration.perspective_transform_read import correct_perspective_images
 from imageProcessing import split_image, process_image
@@ -60,6 +60,7 @@ def main():
     
     camera = Camera(debug=True)
     gameWindow = GameWindow("GameWIndow", debug=True)
+    gameWindow.playSound(GameWindow.soundEffects.START)
     capturing_images = False
     randomStage = -1
   
@@ -68,8 +69,9 @@ def main():
         # question button pressed, randomize question from question dict
         if randomStage == -1 or GPIO.event_detected(QUESTION_PIN):
             print('change question')
-            randomNumber = random.randint(2,29)
+            randomNumber = random.randint(1,29)
             gameWindow.displayStage(randomNumber)
+            gameWindow.questionSoundEffect = findQuestionType(randomNumber)
             randomStage  = questionDict[randomNumber]
             # send question to display screen accordingly, note: question 1 = Artboard 2 .... question 29 = Artboard 30
 
@@ -88,6 +90,8 @@ def main():
             placementIsCorrect = checkTilePlacement(randomStage, stageMatrix)
             if placementIsCorrect:
                 answerIsCorrect = checkAnswerCorrectBool(randomStage, stageMatrix)
+                if answerIsCorrect:
+                    gameWindow.playSound(gameWindow.questionSoundEffect)
                 print(answerIsCorrect)
             else:
                 print("Placement is not correct")

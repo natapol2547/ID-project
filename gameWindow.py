@@ -28,6 +28,7 @@ class GameWindow(Window):
         super().__init__(winname)
         self.path = path
         self.soundEffectPath = r'animals effect sound'
+        self.questionSoundEffect = None
         self.images = os.listdir(path)
         self.images.sort(key=lambda x:int(re.findall(r"[0-9]+",x)[0]))  # Sort the images to ensure consistent order
         self.fullscreen = not debug
@@ -35,7 +36,7 @@ class GameWindow(Window):
         START = r"game-start-317318.wav"
         BEAR =  r"Bear Sound Effect.wav"
         DUCK = r"Duck quack   Sound Effect.wav"
-        FISH = r"Fish Tank Bubbles Sound Effect.wav"
+        NEMO = r"Fish Tank Bubbles Sound Effect.wav"
         MONKEY = r"Monkey - Sound Effect.wav"
         
     def displayStage(self,stageNum:int = 1):
