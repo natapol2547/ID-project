@@ -6,7 +6,7 @@ import random
 import Jetson.GPIO as GPIO
 import time
 from gameWindow import GameWindow
-from gamePathLogic import checkTilePlacement, checkAnswerCorrectBool, imageToMatrix, questionDict
+from gamePathLogic import checkTilePlacement, checkAnswerCorrectBool, imageToMatrix, questionDict, generate_grid_matrix_from_qr_images
 from camCalibrate import Camera
 from calibration.perspective_transform_read import correct_perspective_images
 from imageProcessing import split_image, process_image
@@ -29,7 +29,7 @@ def take_images(camera:Camera):
         while True:
             frame = camera.capture()
             elapsed = time.time() - start_time
-            if elapsed > 1.5:
+            if elapsed > 0.6:
                 image_path = os.path.join(CAPTURE_OUTPUT_DIR, f"image_{i}.png")
                 imagePaths.append(image_path)
                 cv2.imwrite(image_path, frame)
@@ -51,18 +51,21 @@ def main():
     GPIO.setup(QUESTION_PIN, GPIO.IN)
     GPIO.setup(ANSWER_PIN, GPIO.IN) 
     GPIO.setup(SERVO_PIN, GPIO.OUT)
+    GPIO.setup(LED_PIN, GPIO.OUT)
     GPIO.add_event_detect(QUESTION_PIN, GPIO.RISING, bouncetime=200)
     GPIO.add_event_detect(ANSWER_PIN, GPIO.RISING, bouncetime=200)
 
     GPIO.output(LED_PIN, GPIO.LOW)
     GPIO.output(SERVO_PIN,GPIO.LOW)
+    light = Light()
+    light.on()
     #Display main start screen code here (Artboard 1)
     
     camera = Camera(debug=True)
     gameWindow = GameWindow("GameWIndow", debug=True)
     capturing_images = False
     randomStage = -1
-  
+    
     while True:
         camera.capture(correct_distortion=False)
         # question button pressed, randomize question from question dict
@@ -79,10 +82,12 @@ def main():
             imagePaths = take_images(camera) #take images while rotating the servo
             capturing_images = False
 
-            perspextive_corrected_images = correct_perspective_images(imagePaths, output_dir=PERS_OUTPUT_DIR)
-            splitted_images = split_image(perspextive_corrected_images, output_dir=SPLIT_OUTPUT_DIR, rows=1, cols=5, overlap_percent=15)
-            split_image = [process_image(image) for image in splitted_images]
-            stageMatrix = imageToMatrix(splitted_images)
+            perspective_corrected_images = correct_perspective_images(imagePaths, output_dir=PERS_OUTPUT_DIR)
+            # splitted_images = split_image(perspective_corrected_images, output_dir=SPLIT_OUTPUT_DIR, rows=1, cols=5, overlap_percent=15)
+            # splitted_images = [process_image(image) for image in splitted_images]
+            # stageMatrix = imageToMatrix(splitted_images)
+            processed_image = [process_image(image) for image in perspective_corrected_images]
+            stageMatrix = generate_grid_matrix_from_qr_images(processed_image)
             print(stageMatrix)
 
             placementIsCorrect = checkTilePlacement(randomStage, stageMatrix)
@@ -91,7 +96,6 @@ def main():
                 print(answerIsCorrect)
             else:
                 print("Placement is not correct")
-        # time.sleep(0.1)
 
 if __name__ == '__main__':
     main() 

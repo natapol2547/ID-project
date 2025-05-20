@@ -13,4 +13,5 @@ class Light:
         GPIO.output(self.pin, GPIO.HIGH)
 
     def __del__(self):
+        print("Turning Light off")
         self.off()

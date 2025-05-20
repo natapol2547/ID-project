@@ -331,7 +331,7 @@ def decode_qrs_in_row(image_path_or_img_array, num_expected_qrs=5):
 
     return output_list
 
-def generate_grid_matrix_from_qr_images(row_image_paths: list, p_dict, num_qrs_per_row_image=5, grid_rows=5):
+def generate_grid_matrix_from_qr_images(row_image_paths: list, p_dict = pathDict, num_qrs_per_row_image=5, grid_rows=5):
     """
     Processes multiple images, each containing a row of QR codes,
     to build a final grid matrix.

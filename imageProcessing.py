@@ -2,6 +2,8 @@ import cv2
 import os
 import math # Need this for ceiling function
 import typing
+import numpy as np
+from pyzbar import pyzbar
 
 SPLIT_IMAGE_DIR = "split_images"
 
@@ -11,13 +13,14 @@ def process_image(image_path:str)->str:
     new = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     # cropped[:,:,1] = 0
     # Use adaptive thresholding on the V channel
+    new = cv2.GaussianBlur(new, (7, 7), 0)
     thresh_v = cv2.adaptiveThreshold(
         new[:, :, 2],
         255,
         cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
         cv2.THRESH_BINARY_INV,
         51,
-        2
+        0
     )
     new[:, :, 2] = thresh_v
     avgValue = new[:,:,2].mean()
@@ -27,7 +30,7 @@ def process_image(image_path:str)->str:
     new = cv2.cvtColor(new, cv2.COLOR_HSV2BGR) #these three lines can me refactored into one, im too lazy tho
     new = cv2.cvtColor(new, cv2.COLOR_BGR2GRAY)
     new = cv2.cvtColor(new, cv2.COLOR_GRAY2BGR) 
-    iterations = max( 1 ,max(img.shape[0], img.shape[1]) // 500 )# adaptive iteration, set iteration to minimum of 1
+    iterations = max( 1 ,min(img.shape[0], img.shape[1]) // 500 )# adaptive iteration, set iteration to minimum of 1
     new = cv2.erode(new, None, iterations=iterations) # * lower iterations if detail is lost
     new = cv2.dilate(new, None, iterations=iterations) # * lower iterations if detail is lost
     writePath = os.path.splitext(PATH)[0]+"_processed"+os.path.splitext(PATH)[1]
@@ -179,9 +182,9 @@ def split_image(image_paths, output_dir=SPLIT_IMAGE_DIR, rows=1, cols=1, overlap
 
                     # # Convert the image to grayscale
                     tile = cv2.cvtColor(tile, cv2.COLOR_BGR2GRAY)
-                    tile = cv2.GaussianBlur(tile, (5, 5), 0)
-                    kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
-                    tile = cv2.filter2D(tile, -1, kernel)
+                    # tile = cv2.GaussianBlur(tile, (5, 5), 0)
+                    # kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
+                    # tile = cv2.filter2D(tile, -1, kernel)
 
                     # # Now apply thresholding to the grayscale image
                     # thresh, tile = cv2.threshold(tile, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
