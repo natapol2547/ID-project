@@ -1,6 +1,8 @@
 import cv2
 import os
 import math # Need this for ceiling function
+import numpy as np
+from pyzbar import pyzbar
 
 SPLIT_IMAGE_DIR = "split_images"
 
@@ -148,11 +150,15 @@ def split_image(image_paths, output_dir=SPLIT_IMAGE_DIR, rows=1, cols=1, overlap
                 try:
 
                     # # Convert the image to grayscale
-                    # tile = cv2.cvtColor(tile, cv2.COLOR_BGR2GRAY)
+                    tile = cv2.cvtColor(tile, cv2.COLOR_BGR2GRAY)
+                    tile = cv2.GaussianBlur(tile, (5, 5), 0)
+                    kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
+                    tile = cv2.filter2D(tile, -1, kernel)
 
                     # # Now apply thresholding to the grayscale image
-                    # tile = cv2.GaussianBlur(tile, (5, 5), 0)
                     # thresh, tile = cv2.threshold(tile, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+
+                    # tile = cv2.adaptiveThreshold(tile, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 13, 2)
 
                     cv2.imwrite(output_path, tile)
                     output_paths.append(output_path)
@@ -169,3 +175,81 @@ def split_image(image_paths, output_dir=SPLIT_IMAGE_DIR, rows=1, cols=1, overlap
         return False
 
     return output_paths
+
+def detect_and_order_qrcodes(image_path, num_expected_qrcodes=5):
+    """
+    Detects multiple QR codes in an image, extracts their data and orientation,
+    and orders them based on their horizontal center position.
+
+    Args:
+        image_path (str): The path to the image file containing QR codes.
+        num_expected_qrcodes (int): The number of QR codes expected in the image.
+                                    The output list will have this many elements.
+
+    Returns:
+        list: A list of dictionaries, where each dictionary contains 'center',
+              'data', and 'orientation' for a detected QR code.
+              If no QR code is found for an expected position, it will be None.
+    """
+    image = cv2.imread(image_path)
+    if image is None:
+        print(f"Error: Could not open or find the image at {image_path}")
+        return [None] * num_expected_qrcodes
+
+    # Convert the image to grayscale for better detection
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # Detect QR codes
+    detected_qrcodes = pyzbar.decode(gray)
+
+    qr_info_list = []
+    for qrcode in detected_qrcodes:
+        # The bounding box corners
+        (x, y, w, h) = qrcode.rect
+        center_x = x + w // 2
+        center_y = y + h // 2
+
+        # Decode the QR code data
+        data = qrcode.data.decode("utf-8")
+
+        # Orientation can be inferred from the `polygon` attribute or `rect`
+        # For simplicity, we'll just note its presence and data for now.
+        # If you need precise orientation (e.g., angle), it's a bit more complex
+        # and might involve analyzing the QR code's finder patterns.
+        # For this example, we'll assume a "standard" orientation unless you specify more.
+        orientation = "standard" # You can refine this if needed
+
+        qr_info_list.append({
+            'center': (center_x, center_y),
+            'data': data,
+            'orientation': orientation
+        })
+
+        # Optional: Draw bounding box and text on the image
+        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        cv2.putText(image, data, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+    # Sort detected QR codes by their horizontal center position (x-coordinate)
+    qr_info_list.sort(key=lambda item: item['center'][0])
+
+    # Create the final ordered list with Nones for missing QR codes
+    final_ordered_qrcodes = [None] * num_expected_qrcodes
+
+    # This part assumes a relatively even distribution. If QR codes are very
+    # unevenly spaced or there are false positives, you might need more
+    # sophisticated logic to map detected codes to expected indices.
+    # For a row of 5, simple sorting and then filling should work if they are distinct.
+    for i, qr_info in enumerate(qr_info_list):
+        if i < num_expected_qrcodes:
+            final_ordered_qrcodes[i] = qr_info
+        else:
+            # If more QR codes are detected than expected, we'll ignore the extras
+            # or you could handle this differently if it's an error condition.
+            break
+
+    # Optional: Display the image with detections (useful for debugging)
+    # cv2.imshow("Detected QR Codes", image)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
+
+    return final_ordered_qrcodes

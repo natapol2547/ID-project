@@ -9,7 +9,7 @@ from gameWindow import GameWindow
 from camCalibrate import Camera
 from imageProcess import cropSlice, perspTransform
 from calibration.perspective_transform_read import correct_perspective_images
-from split_images import split_image
+from split_images import split_image, detect_and_order_qrcodes
 from lightControl import Light
 import os
 
@@ -253,6 +253,153 @@ def imageToMatrix(imagePaths:dict):
     
     return QR_matrix
 
+def decode_qrs_in_row(image_path_or_img_array, num_expected_qrs=5):
+    """
+    Detects QR codes in a single image (expected to be a row of QRs),
+    assigns them to slots, and returns a list of decoded data.
+
+    Args:
+        image_path_or_img_array: Path to the image file or a pre-loaded image (numpy array).
+        num_expected_qrs: The number of QR codes expected in the row.
+
+    Returns:
+        A list of length num_expected_qrs. Each element is either:
+        - A dictionary {'data': str, 'raw_orientation': ZBarOrientation enum member}
+        - None if a QR code for that position is not found or decoding fails.
+    """
+    if isinstance(image_path_or_img_array, str):
+        img = cv2.imread(image_path_or_img_array)
+        if img is None:
+            print(f"Error: Image not loaded from {image_path_or_img_array}")
+            return [None] * num_expected_qrs
+    else:
+        img = image_path_or_img_array
+    
+    if img is None or img.size == 0:
+        print(f"Error: Image is empty for QR detection.")
+        return [None] * num_expected_qrs
+
+    img_height, img_width = img.shape[:2]
+    if img_width == 0: # Should not happen if img.size > 0, but defensive
+        print(f"Error: Image width is zero.")
+        return [None] * num_expected_qrs
+        
+    decoded_objects = decode(img)
+    
+    output_list = [None] * num_expected_qrs
+    
+    if not decoded_objects:
+        # print("No QR codes found in the image.")
+        return output_list
+
+    detected_qrs_info = []
+    for obj in decoded_objects:
+        if obj.type == 'QRCODE':
+            center_x = obj.rect.left + obj.rect.width / 2.0
+            detected_qrs_info.append({
+                'data': obj.data.decode('utf-8'),
+                'orientation': obj.orientation, # This is a ZBarOrientation enum member
+                'center_x': center_x,
+                'rect': obj.rect # For debugging if needed
+            })
+
+    # Sort detected QR codes by their horizontal center position.
+    # This helps if multiple QRs fall into the same slot calculation,
+    # we can prioritize or just be aware.
+    detected_qrs_info.sort(key=lambda qr: qr['center_x'])
+
+    slot_width = img_width / float(num_expected_qrs)
+    
+    for qr in detected_qrs_info:
+        # Determine which slot this QR belongs to
+        slot_index = int(qr['center_x'] / slot_width)
+        # Ensure slot_index is within bounds [0, num_expected_qrs - 1]
+        slot_index = max(0, min(slot_index, num_expected_qrs - 1))
+
+        if output_list[slot_index] is None:
+            output_list[slot_index] = {
+                'data': qr['data'],
+                'raw_orientation': qr['orientation'] 
+            }
+        else:
+            # This slot is already filled. This can happen if QRs are very close,
+            # slot division isn't perfect, or multiple pyzbar detections for same visual QR.
+            # The current approach takes the first one (after sorting by center_x) that maps to the slot.
+            print(f"Info: Slot {slot_index} was already filled. QR data '{qr['data']}' (center_x: {qr['center_x']}) "
+                  f"contended for the same slot. Previous data: '{output_list[slot_index]['data']}'. Keeping first.")
+
+    return output_list
+
+def generate_grid_matrix_from_qr_images(row_image_paths: list, p_dict, num_qrs_per_row_image=5, grid_rows=5):
+    """
+    Processes multiple images, each containing a row of QR codes,
+    to build a final grid matrix.
+
+    Args:
+        row_image_paths: A list of paths to the images. Each image represents one row in the grid.
+        p_dict: The pathDict mapping QR data to 3x3 matrices.
+        num_qrs_per_row_image: Number of QRs expected in each row image.
+        grid_rows: Number of row images (and thus rows in the final QR grid).
+
+    Returns:
+        A 2D numpy array representing the assembled grid.
+    """
+    if not row_image_paths:
+        print("Error: No image paths provided.")
+        return None
+        
+    # Determine tile dimensions from a sample in pathDict (e.g., 'emptyPath')
+    # Assuming all pathDict entries have the same matrix dimensions.
+    sample_tile = p_dict.get('emptyPath', np.zeros((3,3))) # Default to 3x3 if emptyPath is missing
+    tile_h, tile_w = sample_tile.shape
+
+    assert len(row_image_paths) == grid_rows, \
+        f"Expected {grid_rows} image paths for the grid rows, got {len(row_image_paths)}"
+
+    # Initialize the final large matrix
+    final_matrix_rows = grid_rows * tile_h
+    final_matrix_cols = num_qrs_per_row_image * tile_w
+    # Ensure dtype matches your pathDict values (usually int)
+    final_grid_matrix = np.zeros((final_matrix_rows, final_matrix_cols), dtype=sample_tile.dtype)
+
+    for grid_row_idx in range(grid_rows): # Iterates for each row image
+        image_path = row_image_paths[grid_row_idx]
+        print(f"\nProcessing row image {grid_row_idx + 1}/{grid_rows}: {image_path}")
+        
+        # decoded_qrs_in_row is a list of (QR info dict or None) for the current image
+        decoded_qrs_in_row = decode_qrs_in_row(image_path, num_qrs_per_row_image)
+        print(decoded_qrs_in_row)
+
+        for grid_col_idx in range(num_qrs_per_row_image): # Iterates for QRs within the current row image
+            qr_info = decoded_qrs_in_row[grid_col_idx]
+            current_3x3_matrix = None
+
+            if qr_info is None:
+                # print(f"  Grid Cell ({grid_row_idx},{grid_col_idx}): No QR code found or decoding failed.")
+                current_3x3_matrix = p_dict['emptyPath']
+            else:
+                myData = qr_info['data']
+                orientation = qr_info['raw_orientation'] # pyzbar enum
+                # print(f"  Grid Cell ({grid_row_idx},{grid_col_idx}): Data='{myData}', Orientation={orientation}")
+                
+                if myData in p_dict:
+                    base_matrix_3x3 = p_dict[myData]
+                    current_3x3_matrix = fixMatrixOrientation(base_matrix_3x3, orientation)
+                else:
+                    print(f"Warning: QR data '{myData}' not found in pathDict for grid cell ({grid_row_idx}, {grid_col_idx}). Using 'emptyPath'.")
+                    current_3x3_matrix = p_dict['emptyPath']
+            
+            # Place the 3x3 matrix into the correct slot in the final_grid_matrix
+            start_row_slice = grid_row_idx * tile_h
+            end_row_slice = start_row_slice + tile_h
+            start_col_slice = grid_col_idx * tile_w
+            end_col_slice = start_col_slice + tile_w
+            
+            final_grid_matrix[start_row_slice:end_row_slice, start_col_slice:end_col_slice] = current_3x3_matrix
+            
+    return final_grid_matrix
+
+
 def checkAnswerCorrectBool(questionData, QR_matrix)->bool:
     if checkTilePlacement(questionData,QR_matrix) == True:
         print("Correct Placement")
@@ -357,8 +504,9 @@ def main():
             # GPIO.output(LED_PIN, GPIO.HIGH) #turn off light
             capturing_images = False
 
-            perspextive_corrected_images = correct_perspective_images(imagePaths, output_dir=PERS_OUTPUT_DIR)
-            splitted_images = split_image(perspextive_corrected_images, output_dir=SPLIT_OUTPUT_DIR, rows=1, cols=5, overlap_percent=15)
+            perspective_corrected_images = correct_perspective_images(imagePaths, output_dir=PERS_OUTPUT_DIR)
+            # stageMatrix = generate_grid_matrix_from_qr_images(perspective_corrected_images, pathDict)
+            splitted_images = split_image(perspective_corrected_images, output_dir=SPLIT_OUTPUT_DIR, rows=1, cols=5, overlap_percent=10)
             stageMatrix = imageToMatrix(splitted_images)
             print(stageMatrix)
             placementIsCorrect = checkTilePlacement(randomStage, stageMatrix)
