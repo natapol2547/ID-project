@@ -2,6 +2,7 @@ import numpy as np
 import math
 import cv2
 from pyzbar.pyzbar import decode
+from gameWindow import GameWindow
 '''
 library for handling  qr code reading, path placement, and pathfinding
 #Land path ID: 1
@@ -181,9 +182,27 @@ def create_question(start_type, start_pos, obstacle_positions, end_type, end_pos
         "obstacle": obstacle_positions,
         "end": [[end_type, end_pos]]
     }
+questionTypeDict = {
+    14: GameWindow.soundEffects.BEAR,
+    19: GameWindow.soundEffects.NEMO,
+    24: GameWindow.soundEffects.DUCK,
+    29: GameWindow.soundEffects.MONKEY
+}
 
+def findQuestionType(questionNum):
+    closestDistance = 99999
+    closestKey = 0
+    for x in questionTypeDict.keys():
+        if questionNum < x:
+            continue
+        distance = questionNum - x
+        if distance < closestDistance:
+            closestDistance = distance
+            closestKey = x
+
+    return questionTypeDict[closestKey]
 # Group questions by animal type
-questionDict = {
+questionDict = { #* if modifying this, also modify the questionTypeDict
     # Bear questions (1-14)
     1: create_question('bearStartPoint', 0, [1, 9, 11, 22], 'honeyEndPoint', 23),
     2: create_question('bearStartPoint', 8, [7, 13, 16], 'honeyEndPoint', 12),
