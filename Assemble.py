@@ -9,7 +9,7 @@ from gameWindow import GameWindow
 from camCalibrate import Camera
 from imageProcess import cropSlice, perspTransform
 from calibration.perspective_transform_read import correct_perspective_images
-from split_images import split_image
+from imageProcessing import split_image, process_image
 from lightControl import Light
 import os
 
@@ -297,23 +297,6 @@ def take_images(camera:Camera):
     return imagePaths
 
 
-def crop25Images(imagePaths:list):
-    offset = 0
-    croppedImagePaths = []
-    edgeImages = [] #* put in index of edge images that need to be transformed
-    for i in range(5):
-        img = cv2.imread(imagePaths[i])
-        cropped = img[int(img.shape[0]/5)-offset:int(img.shape[0]*4/5)-offset] 
-        if i in edgeImages: 
-            cropped = perspTransform(cropped,offA=100,offB=300,shift=350)
-        cropped = cv2.resize(cropped, (504,711), fx=0.5, fy=0.5)
-        _,paths = cropSlice(cropped,sliceNum=5,write=True,imageIndexOffset=i*5)
-        [croppedImagePaths.append(path) for path in paths]
-    return croppedImagePaths
-
-
-
-
 ############################################################################
 def main():
     #At start: 
@@ -359,6 +342,7 @@ def main():
 
             perspextive_corrected_images = correct_perspective_images(imagePaths, output_dir=PERS_OUTPUT_DIR)
             splitted_images = split_image(perspextive_corrected_images, output_dir=SPLIT_OUTPUT_DIR, rows=1, cols=5, overlap_percent=15)
+            split_image = [process_image(image) for image in splitted_images]
             stageMatrix = imageToMatrix(splitted_images)
             print(stageMatrix)
             placementIsCorrect = checkTilePlacement(randomStage, stageMatrix)

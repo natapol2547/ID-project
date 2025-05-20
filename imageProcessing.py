@@ -1,10 +1,40 @@
 import cv2
 import os
 import math # Need this for ceiling function
+import typing
 
 SPLIT_IMAGE_DIR = "split_images"
 
-def split_image(image_paths, output_dir=SPLIT_IMAGE_DIR, rows=1, cols=1, overlap_percent=0):
+def process_image(image_path:str)->str:
+    PATH = image_path
+    img = cv2.imread(image_path)
+    new = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    # cropped[:,:,1] = 0
+    # Use adaptive thresholding on the V channel
+    thresh_v = cv2.adaptiveThreshold(
+        new[:, :, 2],
+        255,
+        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv2.THRESH_BINARY_INV,
+        51,
+        2
+    )
+    new[:, :, 2] = thresh_v
+    avgValue = new[:,:,2].mean()
+    # Apply threshold and assign result to the V channel
+    _, thresh_v = cv2.threshold(new[:,:,2], int(avgValue), 255, cv2.THRESH_BINARY_INV)
+    new[:,:,2] = thresh_v
+    new = cv2.cvtColor(new, cv2.COLOR_HSV2BGR) #these three lines can me refactored into one, im too lazy tho
+    new = cv2.cvtColor(new, cv2.COLOR_BGR2GRAY)
+    new = cv2.cvtColor(new, cv2.COLOR_GRAY2BGR) 
+    iterations = max( 1 ,max(img.shape[0], img.shape[1]) // 300 )# adaptive iteration, set iteration to minimum of 1
+    new = cv2.erode(new, None, iterations=iterations) # * lower iterations if detail is lost
+    new = cv2.dilate(new, None, iterations=iterations) # * lower iterations if detail is lost
+    writePath = os.path.splitext(PATH)[0]+"_processed"+os.path.splitext(PATH)[1]
+    cv2.imwrite(writePath,new)
+    return writePath
+
+def split_image(image_paths, output_dir=SPLIT_IMAGE_DIR, rows=1, cols=1, overlap_percent=0)->typing.Union[list, bool]:
     """
     Splits images into tiles with optional overlapping.
 
