@@ -8,7 +8,6 @@ import time
 from gameWindow import GameWindow
 from gamePathLogic import checkTilePlacement, checkAnswerCorrectBool, imageToMatrix, questionDict
 from camCalibrate import Camera
-from imageProcess import cropSlice, perspTransform
 from calibration.perspective_transform_read import correct_perspective_images
 from imageProcessing import split_image, process_image
 from lightControl import Light
@@ -85,6 +84,7 @@ def main():
             split_image = [process_image(image) for image in splitted_images]
             stageMatrix = imageToMatrix(splitted_images)
             print(stageMatrix)
+
             placementIsCorrect = checkTilePlacement(randomStage, stageMatrix)
             if placementIsCorrect:
                 answerIsCorrect = checkAnswerCorrectBool(randomStage, stageMatrix)

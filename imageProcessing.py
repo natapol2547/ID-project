@@ -27,7 +27,7 @@ def process_image(image_path:str)->str:
     new = cv2.cvtColor(new, cv2.COLOR_HSV2BGR) #these three lines can me refactored into one, im too lazy tho
     new = cv2.cvtColor(new, cv2.COLOR_BGR2GRAY)
     new = cv2.cvtColor(new, cv2.COLOR_GRAY2BGR) 
-    iterations = max( 1 ,max(img.shape[0], img.shape[1]) // 300 )# adaptive iteration, set iteration to minimum of 1
+    iterations = max( 1 ,max(img.shape[0], img.shape[1]) // 500 )# adaptive iteration, set iteration to minimum of 1
     new = cv2.erode(new, None, iterations=iterations) # * lower iterations if detail is lost
     new = cv2.dilate(new, None, iterations=iterations) # * lower iterations if detail is lost
     writePath = os.path.splitext(PATH)[0]+"_processed"+os.path.splitext(PATH)[1]
