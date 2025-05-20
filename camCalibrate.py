@@ -12,10 +12,10 @@ import Jetson.GPIO as GPIO
 
 def gstreamer_pipeline(
     sensor_id=0,
-    capture_width=3280,
-    capture_height=2464,
-    display_width=3280,
-    display_height=2464,
+    capture_width=1640,
+    capture_height=1232,
+    display_width=1640,
+    display_height=1232,
     framerate=5,           # You can try higher FPS if needed
     flip_method=0,
 ):
@@ -75,14 +75,15 @@ class Camera():
         if not ret_val:
             print("Error: Could not read frame.")
         
-        # if correct_distortion:
-        #     frame = zoom_image(frame, self.zoom) # Apply zoom if needed
+        if correct_distortion:
+            frame = zoom_image(frame, self.zoom) # Apply zoom if needed
             
         #     # Undistort the image
-        #     frame = cv2.remap(frame, self._mapx, self._mapy, cv2.INTER_LINEAR)
+            frame = cv2.remap(frame, self._mapx, self._mapy, cv2.INTER_LINEAR)
 
         if self.debug:
             if cv2.getWindowProperty(self.window_title, cv2.WND_PROP_AUTOSIZE) >= 0:
+                # frame_S = cv2.resize(frame, (960, 540))
                 cv2.imshow(self.window_title, frame)
             cv2.waitKey(1)
 
