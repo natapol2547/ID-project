@@ -191,14 +191,16 @@ questionTypeDict = {
 
 def findQuestionType(questionNum):
     closestDistance = 99999
-    closestKey = 0
+    closestKey = -1
     for x in questionTypeDict.keys():
         if questionNum < x:
             continue
         distance = questionNum - x
         if distance < closestDistance:
-            closestDistance = distance
-            closestKey = x
+            closestDistance = int(distance)
+            closestKey = int(x)
+    if closestKey == -1:
+        closestKey = min(questionTypeDict.keys())
 
     return questionTypeDict[closestKey]
 # Group questions by animal type
