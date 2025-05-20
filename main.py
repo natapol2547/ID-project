@@ -4,6 +4,7 @@ Driving code for the game on jetson nano, includes main loop and GPIO interface
 import cv2
 import random
 import Jetson.GPIO as GPIO
+import numpy as np
 import time
 from gameWindow import GameWindow
 from gamePathLogic import checkTilePlacement, checkAnswerCorrectBool, imageToMatrix, questionDict, generate_grid_matrix_from_qr_images, findQuestionType
@@ -73,7 +74,7 @@ def main():
         if randomStage == -1 or GPIO.event_detected(QUESTION_PIN):
             print('change question')
             randomNumber = random.randint(1,29)
-            gameWindow.displayStage(randomNumber)
+            gameWindow.displayStage(randomNumber, True)
             gameWindow.questionSoundEffect = findQuestionType(randomNumber)
             randomStage  = questionDict[randomNumber]
             # send question to display screen accordingly, note: question 1 = Artboard 2 .... question 29 = Artboard 30
@@ -88,7 +89,9 @@ def main():
             # splitted_images = split_image(perspective_corrected_images, output_dir=SPLIT_OUTPUT_DIR, rows=1, cols=5, overlap_percent=15)
             # splitted_images = [process_image(image) for image in splitted_images]
             # stageMatrix = imageToMatrix(splitted_images)
-            processed_image = [process_image(image) for image in perspective_corrected_images]
+            processed_image = []
+            for idx, image in enumerate(perspective_corrected_images):
+                processed_image.append(process_image(image, idx == 2))
             stageMatrix = generate_grid_matrix_from_qr_images(processed_image)
             print(stageMatrix)
 
@@ -96,10 +99,27 @@ def main():
             if placementIsCorrect:
                 answerIsCorrect = checkAnswerCorrectBool(randomStage, stageMatrix)
                 if answerIsCorrect:
+                    image = np.zeros((300,300,3), dtype="uint8")
+                    image[:] = (0, 255, 0)
+                    cv2.imshow("Placement Image", image)
+                    cv2.waitKey(2000)
                     gameWindow.playSound(gameWindow.questionSoundEffect)
+                else:
+                    image = np.zeros((300,300,3), dtype="uint8")
+                    image[:] = (0, 255, 255)
+                    cv2.imshow("Placement Image", image)
+                    cv2.waitKey(2000)
                 print(answerIsCorrect)
             else:
+                image = np.zeros((300,300,3), dtype="uint8")
+                image[:] = (0, 0, 255)
+                cv2.imshow("Placement Image", image)
+                cv2.waitKey(2000)
                 print("Placement is not correct")
+            cv2.destroyWindow("Placement Image")
 
 if __name__ == '__main__':
-    main() 
+    try:
+        main()
+    except KeyboardInterrupt:
+        GPIO.cleanup()

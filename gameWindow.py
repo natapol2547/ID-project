@@ -11,7 +11,9 @@ class Window:
     def __init__(self, winname: str):
         self.winname = winname
 
-    def show(self, img, fullscreen: bool = True, delay: int = 1):
+    def show(self, img, fullscreen: bool = True, delay: int = 1, reopen = False):
+        if reopen and cv.getWindowProperty(self.winname, cv.WND_PROP_VISIBLE) >= 0:
+            cv.destroyWindow(self.winnmname)
         cv.namedWindow(self.winname, cv.WINDOW_NORMAL)
         if fullscreen:
             cv.setWindowProperty(self.winname, cv.WND_PROP_FULLSCREEN, cv.WINDOW_FULLSCREEN)
@@ -39,10 +41,10 @@ class GameWindow(Window):
         NEMO = r"Fish Tank Bubbles Sound Effect.wav"
         MONKEY = r"Monkey - Sound Effect.wav"
         
-    def displayStage(self,stageNum:int = 1):
+    def displayStage(self,stageNum:int = 1, reopen = False):
         assert stageNum <= len(self.images), "Stage number exceeds available images"
         img = cv.imread(os.path.join(self.path, self.images[stageNum]))
-        self.show(img)
+        self.show(img, reopen = reopen)
     
     def displayAllStages(self):
         for i in range(len(self.images)):

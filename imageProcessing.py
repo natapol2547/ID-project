@@ -7,12 +7,13 @@ from pyzbar import pyzbar
 
 SPLIT_IMAGE_DIR = "split_images"
 
-def process_image(image_path:str)->str:
+def process_image(image_path:str, middle_shit=False)->str:
     PATH = image_path
     img = cv2.imread(image_path)
     new = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    highMask = new[:,:,2] > new[:,:,2].mean() + new[:,:,2].std()/6
-    new[highMask] = new[highMask]*0.8
+    highMask = new[:,:,2] > new[:,:,2].mean() + new[:,:,2].std()/4
+    if middle_shit:
+        new[highMask] = new[highMask]*0.8
 
     blur = cv2.GaussianBlur(new, (15, 15), 0)
     thresh_v = cv2.adaptiveThreshold(
@@ -32,7 +33,7 @@ def process_image(image_path:str)->str:
     new = cv2.cvtColor(new, cv2.COLOR_HSV2BGR) #these three lines can me refactored into one, im too lazy tho
     new = cv2.cvtColor(new, cv2.COLOR_BGR2GRAY)
     new = cv2.cvtColor(new, cv2.COLOR_GRAY2BGR) 
-    iterations = max(max(img.shape[0], img.shape[1]) // 500 ,1)# adaptive iteration
+    iterations = max(min(img.shape[0], img.shape[1]) // 500 ,1)# adaptive iteration
     new = cv2.erode(new, None, iterations=iterations) # * lower iterations to 1 if image is small
     new = cv2.dilate(new, None, iterations=iterations) # * lower iterations to 1 if image is small
     writePath = os.path.splitext(PATH)[0]+"_processed"+os.path.splitext(PATH)[1]
